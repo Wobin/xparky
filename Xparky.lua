@@ -12,7 +12,7 @@ local options = {}
 local db 
 local factionTable = {}
 
-local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Anchor
+local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Anchor, Lego
 
 local default = {
 	profile = {
@@ -32,7 +32,17 @@ local default = {
 		Spark = 1,
 		Spark2 = 1,
 		Attach = "bottom",
-		Inside = false
+		Inside = false,
+		Lego = false,
+		LegoToGo = false,
+		LegoDB = {
+			width = 32,
+			height = 32,
+			showText = true,
+			showIcon = false,
+			scale = 1,
+			group = nil
+		}
 	}
 }
 
@@ -109,6 +119,13 @@ options.args.bars = {
 			desc = L["Attach a shadow to the bars"],
 			type = "toggle",
 			arg = "ShowShadow"
+		},
+		showlego = {
+			order = 4,
+			name = L["Show Legoblock"],
+			desc = L["Give a textbox with xp/rep details"],
+			type = "toggle",
+			arg = "Lego"
 		},
 		space = {
 			order = 4,
@@ -248,7 +265,7 @@ options.args.bars = {
 }
 
 function Xparky:RescanFactions()
-	Xparky:ScheduleTimer("getFactions", 1, Xparky)
+	Xparky:ScheduleTimer("getFactions", 0.1, Xparky)
 end
 
 function Xparky:getFactions()
@@ -257,7 +274,10 @@ function Xparky:getFactions()
 		local name, _, _, _, _, _, _, _,isHeader, _, isWatched = GetFactionInfo(factionIndex)
 		if not isHeader then
 			if WatchedFaction == name then
-				db.Faction = factionIndex;
+				if db.Faction ~= factionIndex then
+					db.Faction = factionIndex;
+					self:UpdateBars()
+				end
 			end
 			factionTable[factionIndex] = name
 		end
@@ -271,7 +291,7 @@ options.args.factions = {
 	type = "select",
 	values = factionTable,
 	arg = "Faction",
-	set = function(k, v) db.Faction = tonumber(v); SetWatchedFactionIndex(tonumber(v)); UpdateBars() end 
+	set = function(k, v) db.Faction = tonumber(v); SetWatchedFactionIndex(tonumber(v)); end 
 }
 
 function Xparky:OnInitialize()
@@ -279,11 +299,15 @@ function Xparky:OnInitialize()
 	db = Xparky.db.profile
 	reg:RegisterOptionsTable("Xparky", options)
 	self:RegisterChatCommand("xparky", function() dialog:Open("Xparky") end)
-	Xparky:getFactions()
 	Xparky:InitializeBars()
 	Xparky:ConnectBars()
 	Xparky:AttachBar()
 	Xparky:InitialiseEvents()
+	Xparky:getFactions()
+	if db.Lego then
+		self:ShowLegoBlock()
+	end
+	self:ScheduleTimer("UpdateBars", 0.1, self)
 end
 
 local function SetColour(Bar, texture) 
@@ -309,19 +333,19 @@ local function CreateBar(Bar, Spark)
 		local spark = Bar:CreateTexture(Bar.Name .. "Spark", "OVERLAY")
 		spark:SetTexture(Bar.Spark1)
 		spark:SetWidth(128)
-		spark:SetHeight(db.Thickness * 8)
+		spark:SetHeight(db.Thickness * 5)
 		spark:SetBlendMode("ADD")
 		spark:SetParent(Bar)
-		spark:SetPoint("RIGHT", Bar, "RIGHT", 15, 0)
+		spark:SetPoint("RIGHT", Bar, "RIGHT", 5, 0)
 		spark:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
 		Bar.Spark = spark
 		local spark2 = Bar:CreateTexture(Bar.Name .. "Spark2", "OVERLAY")
 		spark2:SetTexture(Bar.Spark2)
 		spark2:SetWidth(128)
-		spark2:SetHeight(db.Thickness * 8)
+		spark2:SetHeight(db.Thickness * 5)
 		spark2:SetBlendMode("ADD")
 		spark2:SetParent(Bar)
-		spark2:SetPoint("RIGHT", Bar, "RIGHT", 15, 0)
+		spark2:SetPoint("RIGHT", Bar, "RIGHT", 5, 0)
 		spark2:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
 		Bar.Spark2 = spark2
 	end
@@ -365,14 +389,12 @@ function Xparky:ConnectBars()
 	local TabA, SlotB
 
 	if (db.Attach == "bottom" and not db.Inside) or (db.Attach == "top" and db.Inside) then
-		self:Print("up top inside")
 		TabA = "TOPLEFT"
 		SlotB = "BOTTOMLEFT"
 		Shadow.Texture:SetTexCoord(0,1,0,1)
 	end
 	
 	if (db.Attach == "top" and not db.Inside) or (db.Attach == "bottom" and db.Inside) then
-		self:Print("down bottom inside")
 		TabA = "BOTTOMLEFT"
 		SlotB = "TOPLEFT"
 		Shadow.Texture:SetTexCoord(1,0,1,0)
@@ -460,13 +482,29 @@ function Xparky:InitialiseEvents()
 	
 end
 
+local function getHex(Bar)
+	local Colours
+	if(type(Bar) == "string") then
+		Colours = db.barColours[Bar]
+		return string.format("|r|cff%02x%02x%02x", Colours.Red*255, Colours.Green*255, Colours.Blue*255)
+	elseif(type(Bar) == "number") then
+		Colours = FACTION_BAR_COLORS[Bar]
+		return string.format("|r|cff%02x%02x%02x", Colours.r*255, Colours.g*255, Colours.b*255)
+	else
+		return ""
+	end
+end
+
 function Xparky:UpdateBars(dimensions)
 	local total = Anchor:GetParent():GetWidth()
+	local currentXP, maxXP, restXP, remainXP, repName, repLevel, minRep, maxRep, currentRep
+	local xpString, repString
+
 	if db.ShowXP then
-		local currentXP = UnitXP("player")
-		local maxXP = UnitXPMax("player")
-		local restXP = GetXPExhaustion() or 0
-		local remainXP = maxXP - (currentXP + restXP)
+		currentXP = UnitXP("player")
+		maxXP = UnitXPMax("player")
+		restXP = GetXPExhaustion() or 0
+		remainXP = maxXP - (currentXP + restXP)
 		if remainXP < 0 then
 			remainXP = 0
 		end
@@ -478,16 +516,30 @@ function Xparky:UpdateBars(dimensions)
 			RestBar:SetWidth((restXP/maxXP)*total + 0.001)
 		end
 		NoXPBar:SetWidth((remainXP/maxXP)*total)
+		if db.LegoToGo then
+			xpString = getHex("NoXPBar")..maxXP-currentXP.. L["xp to go"]
+		else
+			xpString = getHex("XPBar") .. currentXP.."|r/"..getHex("NoXPBar") .. maxXP .. "|r - ["..string.format("%d%%", (currentXP/maxXP)*100).."] ("..string.format("%2d%%",((restXP)/maxXP)*100)..")"
+		end
 	end
 
 	if db.ShowRep then
-		local minRep, maxRep, currentRep = select(3, GetWatchedFactionInfo(tonumber(db.Faction)))
+		repName, repLevel, minRep, maxRep, currentRep = GetWatchedFactionInfo(tonumber(db.Faction))
 		RepBar:SetWidth(((currentRep - minRep)/(maxRep-minRep))*total)
 		NoRepBar:SetWidth(((maxRep - currentRep)/(maxRep - minRep))*total)
+		if db.LegoToGo then
+			repString = getHex("NoRepBar") .. maxRep - currentRep .. L[" rep to go - "]..getHex(repLevel).."(".. repName..")"
+		else
+			repString = getHex("RepBar").. currentRep.."|r/"..getHex("NoRepBar") .. maxRep .."|r"
+		end
 	end
 	
 	if db.ShowShadow then
 		Shadow:SetWidth(total)
+	end
+
+	if db.Lego and Lego then
+		Lego:SetText((xpString or "") .. (xpString and "\n" or "")..(repString or ""))
 	end
 
 	if type(dimensions) == "string" then	
@@ -510,14 +562,30 @@ function Xparky:UpdateBars(dimensions)
 			elseif dimensions == "Spark2" then
 				RepBar.Spark:SetAlpha(db.Spark2)
 			end
-		elseif dimensions == "Attach" then
-			self:AttachBar()
 		elseif string.match(dimensions, "Show") then
 			self:ConnectBars()
+		elseif dimensions == "Attach" then
+			self:AttachBar()
 		elseif dimensions == "Inside" then
 			self:AttachBar()
+		elseif dimensions == "Lego" then
+			if db.Lego then
+				self:ShowLegoBlock()
+			elseif Lego and Lego:IsVisible() then
+				Lego:Hide()
+			end
 		end
 	end
+end
+
+function Xparky:ShowLegoBlock()
+	if not Lego then
+		Lego = LibStub("LegoBlock-Beta1"):New("Xparky")
+		Lego:SetDB(db.LegoDB)
+		Lego:SetScript("OnClick", function() db.LegoToGo = not db.LegoToGo; self:AttachBar(); self:AttachBar() end)
+	end
+	Lego:Show()
+	self:AttachBar()
 end
 
 
