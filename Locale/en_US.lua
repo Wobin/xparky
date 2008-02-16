@@ -31,6 +31,9 @@ if L then
 	L["Which side to attach to"] = true
 	L["Top"] = true
 	L["Bottom"] = true
+	L["Inside Frame?"] = true
+	L["Attach to the inside of the frame"] = true
+
 
 	L["Colours"] = true
 	L["Colours of the bars"] = true

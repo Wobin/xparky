@@ -31,7 +31,8 @@ local default = {
 		Thickness = 2,
 		Spark = 1,
 		Spark2 = 1,
-		Attach = "bottom"
+		Attach = "bottom",
+		Inside = false
 	}
 }
 
@@ -155,19 +156,32 @@ options.args.bars = {
 			arg = "ConnectedFrame",
 			set = function(k,v) db.ConnectedFrame = v; Xparky:AttachBar() end
 		},
-		attachto = {
+		space = {
 			order = 10,
+			name = "",
+			desc = "",
+			type = "description"
+		},
+		attachto = {
+			order = 11,
 			name = L["Attach to:"],
 			desc = L["Which side to attach to"],
 			type = "select",
 			values = { top = L["Top"], bottom = L["Bottom"] },
 			arg = "Attach"
 		},
+		insideframe = {
+			order = 12,
+			name = L["Inside Frame?"],
+			desc = L["Attach to the inside of the frame"],
+			type = "toggle",
+			arg = "Inside"
+		},
 		colours = {
 			type = "group",
 			name = L["Colours"],
 			desc = L["Colours of the bars"],
-			order = 11,
+			order = 13,
 			guiInline = true,
 			get = function(info)
 				local t = db.barColours[info.arg] or { Red = 1, Green = 1, Blue = 1, Alpha = 1}
@@ -314,7 +328,7 @@ local function CreateBar(Bar, Spark)
 	SetColour(Bar, tex)
 	Bar:ClearAllPoints()
 	Bar:SetWidth(100)
-	Bar:SetFrameStrata("HIGH")
+	Bar:SetFrameStrata("DIALOG")
 	return Bar
 end
 
@@ -348,11 +362,17 @@ end
 
 function Xparky:ConnectBars()
 	local Base = Anchor
-	local TabA = "TOPLEFT"
-	local SlotB = "BOTTOMLEFT"
-	Shadow.Texture:SetTexCoord(0,1,0,1)
+	local TabA, SlotB
 
-	if db.Attach == "top" then
+	if (db.Attach == "bottom" and not db.Inside) or (db.Attach == "top" and db.Inside) then
+		self:Print("up top inside")
+		TabA = "TOPLEFT"
+		SlotB = "BOTTOMLEFT"
+		Shadow.Texture:SetTexCoord(0,1,0,1)
+	end
+	
+	if (db.Attach == "top" and not db.Inside) or (db.Attach == "bottom" and db.Inside) then
+		self:Print("down bottom inside")
 		TabA = "BOTTOMLEFT"
 		SlotB = "TOPLEFT"
 		Shadow.Texture:SetTexCoord(1,0,1,0)
@@ -406,9 +426,17 @@ function Xparky:AttachBar()
 	if Foundation then
 		Anchor:ClearAllPoints()
 		if db.Attach == "bottom" then
-			Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, -1)
+			if db.Inside then
+				Anchor:SetPoint("BOTTOMLEFT", Foundation, "BOTTOMLEFT")
+			else
+				Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, -1)
+			end
 		else
-			Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT",0, 1)
+			if db.Inside then
+				Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
+			else
+				Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT",0, 1)
+			end
 		end
 		Anchor:SetParent(Foundation)
 		self:ConnectBars()
@@ -486,6 +514,8 @@ function Xparky:UpdateBars(dimensions)
 			self:AttachBar()
 		elseif string.match(dimensions, "Show") then
 			self:ConnectBars()
+		elseif dimensions == "Inside" then
+			self:AttachBar()
 		end
 	end
 end
