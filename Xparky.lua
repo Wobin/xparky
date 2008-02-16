@@ -3,7 +3,7 @@
 --	Mouse frame selection shamelessly stolen from Dash (Kyhax)
 --]]
 
-local Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
+Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
 local reg = LibStub("AceConfigRegistry-3.0")
 local dialog = LibStub("AceConfigDialog-3.0")
@@ -25,6 +25,9 @@ local default = {
 		},
 		WatchedFaction = false,
 		Faction = 0,
+		ScreenWidth = 100,
+		LegoWidth = 50,
+		Detached = true,
 		ShowXP = true,
 		ShowRep = false,
 		ShowShadow = true,
@@ -33,7 +36,8 @@ local default = {
 		Spark2 = 1,
 		Attach = "bottom",
 		Inside = false,
-		Lego = false,
+		ConnectedFrame = "LegoXparky",
+		Lego = true,
 		LegoToGo = false,
 		LegoDB = {
 			width = 32,
@@ -71,6 +75,7 @@ function mouser:OnUpdate(elap)
         else
         	db.ConnectedFrame = name
         	Xparky:AttachBar()
+        	db.Detached = false
         	reg:NotifyChange("Xparky")
         end
     end
@@ -97,7 +102,6 @@ options.args.bars = {
 	type = "group",
 	name = L["Bars"],
 	desc = L["Bar Modifications"],
-	guiInline = true,
 	args = {
 		showxpbar = {
 			order = 1,
@@ -133,7 +137,6 @@ options.args.bars = {
 			desc = "",
 			type = "description"
 		},
-
 		xpspark = {
 			order = 5,
 			name = L["XP Spark Intensity"],
@@ -158,48 +161,11 @@ options.args.bars = {
 			min = 1.5, max = 8, step = 0.1,
 			arg = "Thickness"
 		},
-		attach = {
-			order = 8,
-			type = "execute",
-			name = L["Hook to frame"],
-			desc = L["Click here to activate the frame selector"],
-			func = function() mouser:Start() end
-		},
-		attached = {
-			order = 9,
-			type = "input",
-			name = L["Frame Connected to"],
-			desc = L["The name of the frame to connect to"],
-			arg = "ConnectedFrame",
-			set = function(k,v) db.ConnectedFrame = v; Xparky:AttachBar() end
-		},
-		space = {
-			order = 10,
-			name = "",
-			desc = "",
-			type = "description"
-		},
-		attachto = {
-			order = 11,
-			name = L["Attach to:"],
-			desc = L["Which side to attach to"],
-			type = "select",
-			values = { top = L["Top"], bottom = L["Bottom"] },
-			arg = "Attach"
-		},
-		insideframe = {
-			order = 12,
-			name = L["Inside Frame?"],
-			desc = L["Attach to the inside of the frame"],
-			type = "toggle",
-			arg = "Inside"
-		},
 		colours = {
 			type = "group",
 			name = L["Colours"],
 			desc = L["Colours of the bars"],
-			order = 13,
-			guiInline = true,
+			order = 8,
 			get = function(info)
 				local t = db.barColours[info.arg] or { Red = 1, Green = 1, Blue = 1, Alpha = 1}
 				return t.Red, t.Green, t.Blue, t.Alpha
@@ -259,8 +225,100 @@ options.args.bars = {
 					hasAlpha = true,
 					arg = "NoRepBar"
 				},
-			}
-		}
+			},
+		},
+		framehook = {
+			type = "group",
+			name = L["Attachment Method"],
+			order = 8,
+			args = {
+				framelink = {
+					type = "group",
+					name = L["Frame Link"],
+					order = 1,
+					args = {
+						attach = {
+							order = 1,
+							type = "execute",
+							name = L["Hook to frame"],
+							desc = L["Click here to activate the frame selector"],
+							func = function() mouser:Start() end
+						},
+						space = {
+							order = 2,
+							name = "",
+							desc = "",
+							type = "description"
+						},
+						attached = {
+							order = 3,
+							type = "input",
+							name = L["Frame Connected to"],
+							desc = L["The name of the frame to connect to"],
+							arg = "ConnectedFrame",
+							set = function(k,v) db.ConnectedFrame = v; db.Detached = false; Xparky:AttachBar() end
+						},
+						attachto = {
+							order = 4,
+							name = L["Attach to:"],
+							desc = L["Which side to attach to"],
+							type = "select",
+							values = { top = L["Top"], bottom = L["Bottom"] },
+							arg = "Attach"
+						},
+						insideframe = {
+							order = 5,
+							name = L["Inside Frame?"],
+							desc = L["Attach to the inside of the frame"],
+							type = "toggle",
+							arg = "Inside"
+						},
+					},
+				},
+				freefloat = {
+					type = "group",
+					name = L["LegoBlock Anchor"],
+					order = 2,
+					args = {
+						connecttolego = {
+							type = "execute",
+							order = 1,
+							name = L["Connect to LegoBlock"],
+							desc = L["Hook the Bars to the LegoBlock"],
+							func = function() db.ConnectedFrame = "LegoXparky"; db.Detached = true end
+						},
+						space = {
+							order = 2,
+							name = "",
+							desc = "",
+							type = "description"
+						},
+						attachto = {
+							name = L["Attach to:"],
+							desc = L["Which side to attach to"],
+							order = 3,
+							type = "select",
+							values = { top = L["Top"], bottom = L["Bottom"] },
+							arg = "Attach"
+						},
+						width = {
+							name = L["Screen width"],
+							desc = L["What percentage of screen width to use"],
+							type = "range",
+							min = 1, max = 100, step = 1,
+							arg = "ScreenWidth"
+						},
+						offset = {
+							name = L["LegoBlock position"],
+							desc = L["What point to place the LegoBlock on the bar"],
+							type = "range",
+							min = 1, max = 100, step = 1,
+							arg = "LegoWidth"
+						},
+					},
+				}
+			},
+		},
 	}
 }
 
@@ -286,12 +344,17 @@ end
 
 options.args.factions = {
 	type = "group",
-	name = L["Faction Selected"],
-	desc = L["List of Factions to watch"],
-	type = "select",
-	values = factionTable,
-	arg = "Faction",
-	set = function(k, v) db.Faction = tonumber(v); SetWatchedFactionIndex(tonumber(v)); end 
+	name = L["Factions"],
+	args = {
+		factionlist = {
+			name = L["Faction Selected"],
+			desc = L["List of Factions to watch"],
+			type = "select",
+			values = factionTable,
+			arg = "Faction",
+			set = function(k, v) db.Faction = tonumber(v); SetWatchedFactionIndex(tonumber(v)); end 
+		}
+	}
 }
 
 function Xparky:OnInitialize()
@@ -299,14 +362,14 @@ function Xparky:OnInitialize()
 	db = Xparky.db.profile
 	reg:RegisterOptionsTable("Xparky", options)
 	self:RegisterChatCommand("xparky", function() dialog:Open("Xparky") end)
+	if db.Lego then
+		self:ShowLegoBlock()
+	end
 	Xparky:InitializeBars()
 	Xparky:ConnectBars()
 	Xparky:AttachBar()
 	Xparky:InitialiseEvents()
 	Xparky:getFactions()
-	if db.Lego then
-		self:ShowLegoBlock()
-	end
 	self:ScheduleTimer("UpdateBars", 0.1, self)
 end
 
@@ -368,7 +431,7 @@ end
 
 
 function Xparky:InitializeBars()
-	Anchor = CreateFrame("Frame", "XparkyAnchor", UIParent)
+	Anchor = CreateFrame("Frame", "XparkyAnchor", Lego or UIParent)
 	Anchor:SetWidth(1)
 	Anchor:SetHeight(1)
 	Anchor:Show()
@@ -447,17 +510,24 @@ function Xparky:AttachBar()
 	local Foundation = db.ConnectedFrame and getglobal(db.ConnectedFrame) or nil
 	if Foundation then
 		Anchor:ClearAllPoints()
+		
+		local LegoPosition = 0
+
+		if db.Detached then
+			LegoPosition = 0 - (db.LegoWidth/100) * GetScreenWidth()*(db.ScreenWidth/100) + Foundation:GetWidth()/2
+		end
+
 		if db.Attach == "bottom" then
 			if db.Inside then
 				Anchor:SetPoint("BOTTOMLEFT", Foundation, "BOTTOMLEFT")
 			else
-				Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, -1)
+				Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", db.Detached and LegoPosition or 0, -1)
 			end
 		else
 			if db.Inside then
 				Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
 			else
-				Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT",0, 1)
+				Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT", db.Detached and LegoPosition or 0, 1)
 			end
 		end
 		Anchor:SetParent(Foundation)
@@ -496,7 +566,7 @@ local function getHex(Bar)
 end
 
 function Xparky:UpdateBars(dimensions)
-	local total = Anchor:GetParent():GetWidth()
+	local total = db.Detached and GetScreenWidth() * (db.ScreenWidth/100) or Anchor:GetParent():GetWidth()
 	local currentXP, maxXP, restXP, remainXP, repName, repLevel, minRep, maxRep, currentRep
 	local xpString, repString
 
@@ -564,6 +634,12 @@ function Xparky:UpdateBars(dimensions)
 			end
 		elseif string.match(dimensions, "Show") then
 			self:ConnectBars()
+		elseif string.match(dimensions, "Width") then
+			if dimensions == "ScreenWidth" then
+				self:AttachBar()
+			else
+				self:AttachBar()
+			end
 		elseif dimensions == "Attach" then
 			self:AttachBar()
 		elseif dimensions == "Inside" then
@@ -585,7 +661,7 @@ function Xparky:ShowLegoBlock()
 		Lego:SetScript("OnClick", function() db.LegoToGo = not db.LegoToGo; self:AttachBar(); self:AttachBar() end)
 	end
 	Lego:Show()
-	self:AttachBar()
+	if Anchor then self:AttachBar() end
 end
 
 

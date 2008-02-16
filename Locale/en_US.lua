@@ -25,6 +25,8 @@ if L then
 	L["Bar Thickness"] = true
 	L["How thick the bars are"] = true
 
+	L["Attachment Method"] = true
+	L["Frame Link"] = true
 	L["Hook to frame"] = true
 	L["Click here to activate the frame selector"] = true
 	L["Frame Connected to"] = true
@@ -37,6 +39,13 @@ if L then
 	L["Inside Frame?"] = true
 	L["Attach to the inside of the frame"] = true
 
+	L["LegoBlock Anchor"] = true
+	L["Connect to LegoBlock"] = true
+	L["Hook the Bars to the LegoBlock"] = true
+	L["Screen width"] = true
+	L["What percentage of screen width to use"] = true
+	L["LegoBlock position"] = true
+	L["What point to place the LegoBlock on the bar"] = true
 
 	L["Colours"] = true
 	L["Colours of the bars"] = true
@@ -51,6 +60,7 @@ if L then
 	L["Empty Reputation Bar"] = true
 	L["Colour of the empty Reputation bar"] = true
 
+	L["Factions"] = true
 	L["Faction Selected"] = true
 	L["List of Factions to watch"] = true
 
