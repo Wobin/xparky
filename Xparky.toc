@@ -10,4 +10,5 @@ embeds.xml
 
 Locale\en_US.lua
 Locale\ko_KR.lua
+LegoBlock.lua
 Xparky.lua
