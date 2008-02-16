@@ -13,6 +13,9 @@ if L then
 
 	L["Show Shadow"] = true
 	L["Attach a shadow to the bars"] = true
+	
+	L["Show Legoblock"] = true
+	L["Give a textbox with xp/rep details"] = true
 
 	L["XP Spark Intensity"] = true
 	L["How strong the XP spark is"] = true
@@ -50,4 +53,7 @@ if L then
 
 	L["Faction Selected"] = true
 	L["List of Factions to watch"] = true
+
+	L["xp to go"] = true
+	L[" rep to go - "] = true
 end

@@ -1,4 +1,4 @@
-﻿## Interface: 20300
+## Interface: 20300
 ## Title: Xparky
 ## Author: Wobin
 ## Notes: Standalone of FuXPFu - Now sticks to anything!
