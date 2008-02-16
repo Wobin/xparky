@@ -237,7 +237,6 @@ end
 
 function Xparky:getFactions()
 	local WatchedFaction = GetWatchedFactionInfo()
-	self:Print("Scanning Factions")
 	for factionIndex = 1, GetNumFactions() do
 		local name, _, _, _, _, _, _, _,isHeader, _, isWatched = GetFactionInfo(factionIndex)
 		if not isHeader then
