@@ -4,7 +4,7 @@
 --]]
 
 local Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
---local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
+local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
 local reg = LibStub("AceConfigRegistry-3.0")
 local dialog = LibStub("AceConfigDialog-3.0")
 local _G = getfenv(0)
@@ -56,7 +56,7 @@ function mouser:OnUpdate(elap)
     if IsMouseButtonDown("LeftButton") then
         self:Stop()
         if not type(frame.GetName) == 'function' or not frame:GetName() then
-            Xparky:Print("This frame has no global name, and cannot be added via the mouse")
+            Xparky:Print(L["This frame has no global name, and cannot be added via the mouse"])
         else
         	db.ConnectedFrame = name
         	Xparky:AttachBar()
@@ -77,35 +77,35 @@ hooksecurefunc(_G.GameMenuFrame, "Show", function() mouser:Stop() end)
 
 
 options.type = "group"
-options.name = "Xparky"
+options.name  = "Xparky"
 options.get  = function( k )  return db[k.arg] end
 options.set  = function( k, v ) db[k.arg] = v; Xparky:UpdateBars(k.arg) end
 options.args = {}
 
 options.args.bars = {
 	type = "group",
-	name = "Bars",
-	desc = "Bar Modifications",
+	name = L["Bars"],
+	desc = L["Bar Modifications"],
 	guiInline = true,
 	args = {
 		showxpbar = {
 			order = 1,
-			name = "Show XP Bar",
-			desc = "Whether to show the XP bar or not",
+			name = L["Show XP Bar"],
+			desc = L["Whether to show the XP bar or not"],
 			type = "toggle",
 			arg = "ShowXP"
 		},
 		showrepbar = {
 			order = 2,
-			name = "Show Reputation Bar",
-			desc = "Whether to show the Reputation bar or not",
+			name = L["Show Reputation Bar"],
+			desc = L["Whether to show the Reputation bar or not"],
 			type = "toggle",
 			arg = "ShowRep"
 		},
 		showshadow = {
 			order = 3,
-			name = "Show Shadow",
-			desc = "Attach a shadow to the bars",
+			name = L["Show Shadow"],
+			desc = L["Attach a shadow to the bars"],
 			type = "toggle",
 			arg = "ShowShadow"
 		},
@@ -118,24 +118,24 @@ options.args.bars = {
 
 		xpspark = {
 			order = 5,
-			name = "XP Spark Intensity",
-			desc = "How strong the XP spark is",
+			name = L["XP Spark Intensity"],
+			desc = L["How strong the XP spark is"],
 			type = "range",
 			min = 0.1, max = 1, step = 0.05,
 			arg = "Spark",
 		},
 		repspark = {
 			order = 6,
-			name = "Reputation Spark Intensity",
-			desc = "How strong the Reputation spark is",
+			name = L["Reputation Spark Intensity"],
+			desc = L["How strong the Reputation spark is"],
 			type = "range",
 			min = 0.1, max = 1, step = 0.05,
 			arg = "Spark2"
 		},
 		thick = {
 			order = 7,
-			name = "Bar Thickness",
-			desc = "How thick the bars are",
+			name = L["Bar Thickness"],
+			desc = L["How thick the bars are"],
 			type = "range",
 			min = 1.5, max = 8, step = 0.1,
 			arg = "Thickness"
@@ -143,28 +143,28 @@ options.args.bars = {
 		attach = {
 			order = 8,
 			type = "execute",
-			name = "Hook to frame",
-			desc = "Click here to activate the frame selector",
+			name = L["Hook to frame"],
+			desc = L["Click here to activate the frame selector"],
 			func = function() mouser:Start() end
 		},
 		attached = {
 			order = 9,
 			type = "input",
-			name = "Frame Connected to",
+			name = L["Frame Connected to"],
 			arg = "ConnectedFrame"
 		},
 		attachto = {
 			order = 10,
-			name = "Attach to:",
-			desc = "Which side to attach to",
+			name = L["Attach to:"],
+			desc = L["Which side to attach to"],
 			type = "select",
-			values = { top = "Top", bottom = "Bottom" },
+			values = { top = L["Top"], bottom = L["Bottom"] },
 			arg = "Attach"
 		},
 		colours = {
 			type = "group",
-			name = "Colours",
-			desc = "Colours of the bars",
+			name = L["Colours"],
+			desc = L["Colours of the bars"],
 			order = 11,
 			guiInline = true,
 			get = function(info)
@@ -182,24 +182,24 @@ options.args.bars = {
 			args = {
 				colourXP = {
 					order = 1,
-					name = "Experience Bar",
-					desc = "Colour of the full XP bar",
+					name = L["Experience Bar"],
+					desc = L["Colour of the full XP bar"],
 					type = "color",
 					hasAlpha = true,
 					arg = "XPBar"
 				},
 				colourNoXP = {
 					order = 2,
-					name  = "Empty Experience Bar",
-					desc  = "Colour of the empty XP bar",
+					name = L["Empty Experience Bar"],
+					desc = L["Colour of the empty XP bar"],
 					type = "color",
 					hasAlpha = true,
 					arg = "NoXPBar"
 				},
 				colourRested = {
 					order = 3,
-					name = "Rested Bar",
-					desc = "Colour of the Rested XP bar",
+					name = L["Rested Bar"],
+					desc = L["Colour of the Rested XP bar"],
 					type = "color",
 					hasAlpha = true,
 					arg  = "RestBar"
@@ -207,21 +207,21 @@ options.args.bars = {
 				space = {
 					order = 4,
 					name = "",
-					desc = "",
+					desc  = "",
 					type = "description"
 				},
 				colourRep = {
 					order = 5,
-					name = "Reputation Bar",
-					desc = "Colour of the full Reputation bar",
+					name = L["Reputation Bar"],
+					desc = L["Colour of the full Reputation bar"],
 					type = "color",
 					hasAlpha = true,
 					arg = "RepBar"
 				},
 				colourNoRep = {
 					order = 6,
-					name = "Empty Reputation Bar",
-					desc = "Colour of the empty Reputation bar",
+					name = L["Empty Reputation Bar"],
+					desc = L["Colour of the empty Reputation bar"],
 					type = "color",
 					hasAlpha = true,
 					arg = "NoRepBar"
@@ -250,12 +250,12 @@ end
 
 options.args.factions = {
 	type = "group",
-	name = "Faction Selected",
-	desc = "List of Factions to watch",
+	name = L["Faction Selected"],
+	desc = L["List of Factions to watch"],
 	type = "select",
 	values = factionTable,
 	arg = "Faction",
-	set = function(k, v) db.Faction = tonumber(v); SetWatchedFactionIndex(tonumber(v)) end 
+	set = function(k, v) db.Faction = tonumber(v); SetWatchedFactionIndex(tonumber(v)); UpdateBars() end 
 }
 
 function Xparky:OnInitialize()
@@ -274,24 +274,26 @@ local function SetColour(Bar, texture)
 	local Setting = db.barColours[Bar.Name]
 	if Setting then
 		texture:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
+		if Bar.Spark then
+			Bar.Spark:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
+			Bar.Spark2:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
+		end
 	end
 end
 
 local function CreateBar(Bar, Spark)
 	local tex = Bar:CreateTexture(Bar.Texture)
 	tex:SetTexture(Bar.Texture)
-	SetColour(Bar, tex)
 	tex:ClearAllPoints()
 	tex:SetAllPoints(Bar)
 	tex:Show()
-	Bar.Tex = tex
+	Bar.Texture = tex
 	Bar:SetHeight(db.Thickness)
 	if Spark then
 		local spark = Bar:CreateTexture(Bar.Name .. "Spark", "OVERLAY")
 		spark:SetTexture(Bar.Spark1)
 		spark:SetWidth(128)
 		spark:SetHeight(db.Thickness * 8)
-		SetColour(Bar, spark)
 		spark:SetBlendMode("ADD")
 		spark:SetParent(Bar)
 		spark:SetPoint("RIGHT", Bar, "RIGHT", 15, 0)
@@ -301,13 +303,13 @@ local function CreateBar(Bar, Spark)
 		spark2:SetTexture(Bar.Spark2)
 		spark2:SetWidth(128)
 		spark2:SetHeight(db.Thickness * 8)
-		SetColour(Bar, spark2)
 		spark2:SetBlendMode("ADD")
 		spark2:SetParent(Bar)
 		spark2:SetPoint("RIGHT", Bar, "RIGHT", 15, 0)
 		spark2:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
 		Bar.Spark2 = spark2
 	end
+	SetColour(Bar, tex)
 	Bar:ClearAllPoints()
 	Bar:SetWidth(100)
 	Bar:SetFrameStrata("HIGH")
@@ -336,22 +338,22 @@ function Xparky:InitializeBars()
 	NoRepBar = GenerateBar("NoRepBar")
 	RestBar = GenerateBar("RestBar")
 	Shadow = GenerateBar("Shadow")
-	Shadow.Tex:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
-	Shadow.Tex:SetVertexColor(0, 0, 0, 1)
-	Shadow.Tex:SetHeight(5)
-	Shadow.Tex:SetTexCoord(0,1,0,1)
+	Shadow.Texture:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
+	Shadow.Texture:SetVertexColor(0, 0, 0, 1)
+	Shadow.Texture:SetHeight(5)
+	Shadow.Texture:SetTexCoord(0,1,0,1)
 end
 
 function Xparky:ConnectBars()
 	local Base = Anchor
 	local TabA = "TOPLEFT"
 	local SlotB = "BOTTOMLEFT"
-	Shadow.Tex:SetTexCoord(0,1,0,1)
+	Shadow.Texture:SetTexCoord(0,1,0,1)
 
 	if db.Attach == "top" then
 		TabA = "BOTTOMLEFT"
 		SlotB = "TOPLEFT"
-		Shadow.Tex:SetTexCoord(1,0,1,0)
+		Shadow.Texture:SetTexCoord(1,0,1,0)
 	end
 
 	XPBar:Hide()
@@ -400,9 +402,9 @@ function Xparky:AttachBar()
 	if Foundation then
 		Anchor:ClearAllPoints()
 		if db.Attach == "bottom" then
-			Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, 1)
+			Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, -1)
 		else
-			Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT",0, -1)
+			Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT",0, 1)
 		end
 		Anchor:SetParent(Foundation)
 		self:ConnectBars()
@@ -422,26 +424,34 @@ end
 
 function Xparky:UpdateBars(dimensions)
 	local total = Anchor:GetParent():GetWidth()
-	local currentXP = UnitXP("player")
-	local maxXP = UnitXPMax("player")
-	local restXP = GetXPExhaustion() or 0
-	local remainXP = maxXP - (currentXP + restXP)
-	if remainXP < 0 then
-		remainXP = 0
+	if db.ShowXP then
+		local currentXP = UnitXP("player")
+		local maxXP = UnitXPMax("player")
+		local restXP = GetXPExhaustion() or 0
+		local remainXP = maxXP - (currentXP + restXP)
+		if remainXP < 0 then
+			remainXP = 0
+		end
+
+		XPBar:SetWidth((currentXP/maxXP)*total)
+		if (restXP + currentXP)/maxXP > 1 then
+			RestBar:SetWidth(total - XPBar:GetWidth())
+		else
+			RestBar:SetWidth((restXP/maxXP)*total + 0.001)
+		end
+		NoXPBar:SetWidth((remainXP/maxXP)*total)
 	end
 
-	XPBar:SetWidth((currentXP/maxXP)*total)
-	if (restXP + currentXP)/maxXP > 1 then
-		RestBar:SetWidth(total - XPBar:GetWidth())
-	else
-		RestBar:SetWidth((restXP/maxXP)*total + 0.001)
+	if db.ShowRep then
+		local minRep, maxRep, currentRep = select(3, GetWatchedFactionInfo(tonumber(db.Faction)))
+		RepBar:SetWidth(((currentRep - minRep)/(maxRep-minRep))*total)
+		NoRepBar:SetWidth(((maxRep - currentRep)/(maxRep - minRep))*total)
 	end
-	NoXPBar:SetWidth((remainXP/maxXP)*total)
+	
+	if db.ShowShadow then
+		Shadow:SetWidth(total)
+	end
 
-	local minRep, maxRep, currentRep = select(3, GetWatchedFactionInfo(tonumber(db.Faction)))
-	RepBar:SetWidth(((currentRep - minRep)/(maxRep-minRep))*total)
-	NoRepBar:SetWidth(((maxRep - currentRep)/(maxRep - minRep))*total)
-	Shadow:SetWidth(total)
 	if type(dimensions) == "string" then	
 		if dimensions == "Thickness" then
 			XPBar:SetHeight(db.Thickness)
@@ -455,7 +465,7 @@ function Xparky:UpdateBars(dimensions)
 			RepBar.Spark2:SetHeight(db.Thickness * 8)
 		elseif string.match(dimensions, "Bar") then
 			local Bar = getglobal(dimensions .. "Xparky")
-			SetColour(Bar, Bar.Tex)
+			SetColour(Bar, Bar.Texture)
 		elseif string.match(dimensions, "Spark") then
 			if dimensions == "Spark" then
 				XPBar.Spark:SetAlpha(db.Spark)
