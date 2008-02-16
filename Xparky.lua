@@ -3,7 +3,7 @@
 --	Mouse frame selection shamelessly stolen from Dash (Kyhax)
 --]]
 
- Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0", "AceTimer-3.0", "AceBucket-3.0")
+ Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
 --local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
 local reg = LibStub("AceConfigRegistry-3.0")
 local dialog = LibStub("AceConfigDialog-3.0")
@@ -232,12 +232,12 @@ options.args.bars = {
 }
 
 function Xparky:RescanFactions()
-	self:ScheduleTimer("getFactions", 1)
+	Xparky:ScheduleTimer("getFactions", 1, Xparky)
 end
 
 function Xparky:getFactions()
 	local WatchedFaction = GetWatchedFactionInfo()
-
+	self:Print("Scanning Factions")
 	for factionIndex = 1, GetNumFactions() do
 		local name, _, _, _, _, _, _, _,isHeader, _, isWatched = GetFactionInfo(factionIndex)
 		if not isHeader then
@@ -416,7 +416,8 @@ function Xparky:InitialiseEvents()
 	self:RegisterEvent("PLAYER_XP_UPDATE", "UpdateBars")
 	self:RegisterBucketEvent("UPDATE_EXHAUSTION", 60, "UpdateBars")
 	self:RegisterBucketEvent("UPDATE_FACTION", 5, "UpdateBars")
-	self:SecureHook("SetWatchedFactionIndex", "RescanFactions")
+	hooksecurefunc("SetWatchedFactionIndex", Xparky.RescanFactions)
+	
 end
 
 function Xparky:UpdateBars(dimensions)
