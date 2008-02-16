@@ -151,7 +151,9 @@ options.args.bars = {
 			order = 9,
 			type = "input",
 			name = L["Frame Connected to"],
-			arg = "ConnectedFrame"
+			desc = L["The name of the frame to connect to"],
+			arg = "ConnectedFrame",
+			set = function(k,v) db.ConnectedFrame = v; Xparky:AttachBar() end
 		},
 		attachto = {
 			order = 10,
@@ -397,6 +399,8 @@ function Xparky:ConnectBars()
 	end
 end
 
+local timeout = 0
+
 function Xparky:AttachBar()
 	local Foundation = db.ConnectedFrame and getglobal(db.ConnectedFrame) or nil
 	if Foundation then
@@ -410,7 +414,13 @@ function Xparky:AttachBar()
 		self:ConnectBars()
 		self:UpdateBars()
 	else
+		if timeout > 5 then
+			self:Print(L["Cannot find frame specified"])
+			timeout = 0
+			return
+		end
 		self:ScheduleTimer("AttachBar", 1, self)
+		timeout = timeout + 1
 	end 
 end
 

@@ -25,6 +25,8 @@ if L then
 	L["Hook to frame"] = true
 	L["Click here to activate the frame selector"] = true
 	L["Frame Connected to"] = true
+	L["The name of the frame to connect to"] = true
+	L["Cannot find frame specified"] = true
 	L["Attach to:"] = true
 	L["Which side to attach to"] = true
 	L["Top"] = true
