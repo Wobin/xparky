@@ -3,7 +3,7 @@
 --	Mouse frame selection shamelessly stolen from Dash (Kyhax)
 --]]
 
- Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
+local Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
 --local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
 local reg = LibStub("AceConfigRegistry-3.0")
 local dialog = LibStub("AceConfigDialog-3.0")
@@ -263,6 +263,7 @@ function Xparky:OnInitialize()
 	Xparky.db = LibStub("AceDB-3.0"):New("XparkyDB", default, "profile")
 	db = Xparky.db.profile
 	reg:RegisterOptionsTable("Xparky", options)
+	self:RegisterChatCommand("xparky", function() dialog:Open("Xparky") end)
 	Xparky:getFactions()
 	Xparky:InitializeBars()
 	Xparky:ConnectBars()
