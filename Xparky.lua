@@ -27,7 +27,6 @@ local default = {
 		Faction = 0,
 		ScreenWidth = 100,
 		LegoWidth = 50,
-		Detached = true,
 		ShowXP = true,
 		ShowRep = false,
 		ShowShadow = true,
@@ -75,7 +74,6 @@ function mouser:OnUpdate(elap)
         else
         	db.ConnectedFrame = name
         	Xparky:AttachBar()
-        	db.Detached = false
         	reg:NotifyChange("Xparky")
         end
     end
@@ -275,48 +273,6 @@ options.args.bars = {
 						},
 					},
 				},
-				freefloat = {
-					type = "group",
-					name = L["LegoBlock Anchor"],
-					order = 2,
-					args = {
-						connecttolego = {
-							type = "execute",
-							order = 1,
-							name = L["Connect to LegoBlock"],
-							desc = L["Hook the Bars to the LegoBlock"],
-							func = function() db.ConnectedFrame = "LegoXparky"; db.Detached = true end
-						},
-						space = {
-							order = 2,
-							name = "",
-							desc = "",
-							type = "description"
-						},
-						attachto = {
-							name = L["Attach to:"],
-							desc = L["Which side to attach to"],
-							order = 3,
-							type = "select",
-							values = { top = L["Top"], bottom = L["Bottom"] },
-							arg = "Attach"
-						},
-						width = {
-							name = L["Screen width"],
-							desc = L["What percentage of screen width to use"],
-							type = "range",
-							min = 1, max = 100, step = 1,
-							arg = "ScreenWidth"
-						},
-						offset = {
-							name = L["LegoBlock position"],
-							desc = L["What point to place the LegoBlock on the bar"],
-							type = "range",
-							min = 1, max = 100, step = 1,
-							arg = "LegoWidth"
-						},
-					},
-				}
 			},
 		},
 	}
@@ -511,23 +467,17 @@ function Xparky:AttachBar()
 	if Foundation then
 		Anchor:ClearAllPoints()
 		
-		local LegoPosition = 0
-
-		if db.Detached then
-			LegoPosition = 0 - (db.LegoWidth/100) * GetScreenWidth()*(db.ScreenWidth/100) + Foundation:GetWidth()/2
-		end
-
 		if db.Attach == "bottom" then
 			if db.Inside then
 				Anchor:SetPoint("BOTTOMLEFT", Foundation, "BOTTOMLEFT")
 			else
-				Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", db.Detached and LegoPosition or 0, -1)
+				Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, -1)
 			end
 		else
 			if db.Inside then
 				Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
 			else
-				Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT", db.Detached and LegoPosition or 0, 1)
+				Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT", 0, 1)
 			end
 		end
 		Anchor:SetParent(Foundation)

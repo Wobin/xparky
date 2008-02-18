@@ -39,14 +39,6 @@ if L then
 	L["Inside Frame?"] = true
 	L["Attach to the inside of the frame"] = true
 
-	L["LegoBlock Anchor"] = true
-	L["Connect to LegoBlock"] = true
-	L["Hook the Bars to the LegoBlock"] = true
-	L["Screen width"] = true
-	L["What percentage of screen width to use"] = true
-	L["LegoBlock position"] = true
-	L["What point to place the LegoBlock on the bar"] = true
-
 	L["Colours"] = true
 	L["Colours of the bars"] = true
 	L["Experience Bar"] = true
