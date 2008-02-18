@@ -45,7 +45,17 @@ local default = {
 			showIcon = false,
 			scale = 1,
 			group = nil
-		}
+		},
+		XPBar = { 
+			Foundation = "LegoXparky",
+			Side = "bottom",
+			Inside = false,
+		},
+		RepBar = {
+			Foundation = "XPBar",
+			Side = "bottom",
+			Inside = "false"
+		},
 	}
 }
 
@@ -225,58 +235,68 @@ options.args.bars = {
 				},
 			},
 		},
-		framehook = {
+		framelink = {
 			type = "group",
-			name = L["Attachment Method"],
-			order = 8,
+			name = L["Frame Link"],
+			order = 1,
 			args = {
-				framelink = {
-					type = "group",
-					name = L["Frame Link"],
+				attach = {
 					order = 1,
-					args = {
-						attach = {
-							order = 1,
-							type = "execute",
-							name = L["Hook to frame"],
-							desc = L["Click here to activate the frame selector"],
-							func = function() mouser:Start() end
-						},
-						space = {
-							order = 2,
-							name = "",
-							desc = "",
-							type = "description"
-						},
-						attached = {
-							order = 3,
-							type = "input",
-							name = L["Frame Connected to"],
-							desc = L["The name of the frame to connect to"],
-							arg = "ConnectedFrame",
-							set = function(k,v) db.ConnectedFrame = v; db.Detached = false; Xparky:AttachBar() end
-						},
-						attachto = {
-							order = 4,
-							name = L["Attach to:"],
-							desc = L["Which side to attach to"],
-							type = "select",
-							values = { top = L["Top"], bottom = L["Bottom"] },
-							arg = "Attach"
-						},
-						insideframe = {
-							order = 5,
-							name = L["Inside Frame?"],
-							desc = L["Attach to the inside of the frame"],
-							type = "toggle",
-							arg = "Inside"
-						},
-					},
+					type = "execute",
+					name = L["Hook to frame"],
+					desc = L["Click here to activate the frame selector"],
+					func = function() mouser:Start() end
+				},
+				space = {
+					order = 2,
+					name = "",
+					desc = "",
+					type = "description"
+				},
+				attached = {
+					order = 3,
+					type = "input",
+					name = L["Frame Connected to"],
+					desc = L["The name of the frame to connect to"],
+					arg = "ConnectedFrame",
+					set = function(k,v) db.ConnectedFrame = v; db.Detached = false; Xparky:AttachBar() end
+				},
+				attachto = {
+					order = 4,
+					name = L["Attach to:"],
+					desc = L["Which side to attach to"],
+					type = "select",
+					values = { top = L["Top"], bottom = L["Bottom"], left = L["Left"], right = L["Right"] },
+					arg = "Attach"
+				},
+				insideframe = {
+					order = 5,
+					name = L["Inside Frame?"],
+					desc = L["Attach to the inside of the frame"],
+					type = "toggle",
+					arg = "Inside"
 				},
 			},
 		},
 	}
 }
+
+--[[ Local helper functions --]]
+--
+local function getHex(Bar)
+	local Colours
+	if(type(Bar) == "string") then
+		Colours = db.barColours[Bar]
+		return string.format("|r|cff%02x%02x%02x", Colours.Red*255, Colours.Green*255, Colours.Blue*255)
+	elseif(type(Bar) == "number") then
+		Colours = FACTION_BAR_COLORS[Bar]
+		if Colours then
+			return string.format("|r|cff%02x%02x%02x", Colours.r*255, Colours.g*255, Colours.b*255)
+		else return "" end
+	else
+		return ""
+	end
+end
 
 function Xparky:RescanFactions()
 	Xparky:ScheduleTimer("getFactions", 0.1, Xparky)
@@ -340,6 +360,34 @@ local function SetColour(Bar, texture)
 	end
 end
 
+local function Width(Bar, Size)
+	if db.Attach == "top" or db.Attach == "bottom" then
+		if not Size then
+			return Bar:GetWidth()
+		end
+		Bar:SetWidth(Size)
+	else
+		if not Size then 
+			return Bar:GetHeight()
+		end
+		Bar:SetHeight(Size)
+	end
+end
+
+local function Height(Bar, Size)
+	if db.Attach == "top" or db.Attach == "bottom" then
+		if not Size then
+			return Bar:GetHeight()
+		end
+		Bar:SetHeight(Size)
+	else
+		if not Size then
+			return Bar:GetWidth()
+		end
+		Bar:SetWidth(Size)
+	end
+end
+
 local function CreateBar(Bar, Spark)
 	local tex = Bar:CreateTexture(Bar.Texture)
 	tex:SetTexture(Bar.Texture)
@@ -347,21 +395,22 @@ local function CreateBar(Bar, Spark)
 	tex:SetAllPoints(Bar)
 	tex:Show()
 	Bar.Texture = tex
-	Bar:SetHeight(db.Thickness)
+	Height(Bar, db.Thickness)
 	if Spark then
 		local spark = Bar:CreateTexture(Bar.Name .. "Spark", "OVERLAY")
 		spark:SetTexture(Bar.Spark1)
-		spark:SetWidth(128)
-		spark:SetHeight(db.Thickness * 5)
+		Width(spark, 128)
+		Height(spark, db.Thickness * 5)
 		spark:SetBlendMode("ADD")
 		spark:SetParent(Bar)
 		spark:SetPoint("RIGHT", Bar, "RIGHT", 5, 0)
+		
 		spark:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
 		Bar.Spark = spark
 		local spark2 = Bar:CreateTexture(Bar.Name .. "Spark2", "OVERLAY")
 		spark2:SetTexture(Bar.Spark2)
-		spark2:SetWidth(128)
-		spark2:SetHeight(db.Thickness * 5)
+		Width(spark2, 128)
+		Height(spark2, db.Thickness * 5)
 		spark2:SetBlendMode("ADD")
 		spark2:SetParent(Bar)
 		spark2:SetPoint("RIGHT", Bar, "RIGHT", 5, 0)
@@ -370,7 +419,7 @@ local function CreateBar(Bar, Spark)
 	end
 	SetColour(Bar, tex)
 	Bar:ClearAllPoints()
-	Bar:SetWidth(100)
+	Width(Bar, 100)
 	Bar:SetFrameStrata("DIALOG")
 	return Bar
 end
@@ -383,7 +432,6 @@ local function GenerateBar(BarName, Spark)
 	Bar.Spark2 =  "Interface\\AddOns\\Xparky\\Textures\\glow2.tga"
 	return CreateBar(Bar, Spark)
 end
-
 
 
 function Xparky:InitializeBars()
@@ -405,7 +453,7 @@ end
 
 function Xparky:ConnectBars()
 	local Base = Anchor
-	local TabA, SlotB
+	local TabA, SlotB, TabC, SlotD
 
 	if (db.Attach == "bottom" and not db.Inside) or (db.Attach == "top" and db.Inside) then
 		TabA = "TOPLEFT"
@@ -419,6 +467,28 @@ function Xparky:ConnectBars()
 		Shadow.Texture:SetTexCoord(1,0,1,0)
 	end
 
+	if (db.Attach == "left" and not db.Inside) or (db.Attach == "right" and db.Inside) then
+		TabA = "TOPRIGHT"
+		SlotB = "TOPLEFT"
+		Shadow.Texture:SetTexCoord(1,1,0,0)
+	end
+
+	if (db.Attach == "right" and not db.Inside) or (db.Attach == "left" and db.Inside) then
+		TabA = "TOPLEFT"
+		SlotB = "TOPRIGHT"
+		Shadow.Texture:SetTexCoord(0,0,1,1)
+	end
+
+	if db.Attach == "bottom" or db.Attach == "top" then
+		TabC = "LEFT"
+		SlotD = "RIGHT"
+	end
+
+	if db.Attach == "left" or db.Attach == "right" then
+		TabC = "BOTTOM"
+		SlotD = "TOP"
+	end
+
 	XPBar:Hide()
 	RestBar:Hide()
 	NoXPBar:Hide()
@@ -428,9 +498,9 @@ function Xparky:ConnectBars()
 		XPBar:SetPoint(TabA, Base, SlotB)
 		XPBar:SetFrameLevel( NoXPBar:GetFrameLevel() + 1)
 		RestBar:ClearAllPoints()
-		RestBar:SetPoint("LEFT", XPBar, "RIGHT")
+		RestBar:SetPoint(TabC, XPBar, SlotD)
 		NoXPBar:ClearAllPoints()
-		NoXPBar:SetPoint("LEFT", RestBar, "RIGHT")
+		NoXPBar:SetPoint(TabC, RestBar, SlotD)
 		XPBar:Show()
 		RestBar:Show()
 		NoXPBar:Show()
@@ -444,7 +514,7 @@ function Xparky:ConnectBars()
 		RepBar:ClearAllPoints()
 		RepBar:SetPoint(TabA, Base, SlotB )
 		NoRepBar:ClearAllPoints()
-		NoRepBar:SetPoint("LEFT", RepBar, "RIGHT")
+		NoRepBar:SetPoint(TabC, RepBar, SlotD)
 		RepBar:SetFrameLevel( NoRepBar:GetFrameLevel() + 1)
 		RepBar:Show()
 		NoRepBar:Show()
@@ -462,7 +532,7 @@ end
 
 local timeout = 0
 
-function Xparky:AttachBar()
+function Xparky:AttachBar(Bar)
 	local Foundation = db.ConnectedFrame and getglobal(db.ConnectedFrame) or nil
 	if Foundation then
 		Anchor:ClearAllPoints()
@@ -473,13 +543,26 @@ function Xparky:AttachBar()
 			else
 				Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, -1)
 			end
-		else
+		elseif db.Attach == "top" then
 			if db.Inside then
 				Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
 			else
 				Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT", 0, 1)
 			end
+		elseif db.Attach == "left" then
+			if db.Inside then
+				Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
+			else
+				Anchor:SetPoint("TOPRIGHT", Foundation, "TOPLEFT", 0, 1)
+			end
+		elseif db.Attach == "right" then
+			if db.Inside then
+				Anchor:SetPoint("TOPRIGHT", Foundation, "TOPRIGHT")
+			else
+				Anchor:SetPoint("TOPLEFT", Foundation, "TOPRIGHT", 0, 1)
+			end
 		end
+
 		Anchor:SetParent(Foundation)
 		self:ConnectBars()
 		self:UpdateBars()
@@ -502,21 +585,10 @@ function Xparky:InitialiseEvents()
 	
 end
 
-local function getHex(Bar)
-	local Colours
-	if(type(Bar) == "string") then
-		Colours = db.barColours[Bar]
-		return string.format("|r|cff%02x%02x%02x", Colours.Red*255, Colours.Green*255, Colours.Blue*255)
-	elseif(type(Bar) == "number") then
-		Colours = FACTION_BAR_COLORS[Bar]
-		return string.format("|r|cff%02x%02x%02x", Colours.r*255, Colours.g*255, Colours.b*255)
-	else
-		return ""
-	end
-end
+
 
 function Xparky:UpdateBars(dimensions)
-	local total = db.Detached and GetScreenWidth() * (db.ScreenWidth/100) or Anchor:GetParent():GetWidth()
+	local total =  Anchor:GetParent():GetWidth()
 	local currentXP, maxXP, restXP, remainXP, repName, repLevel, minRep, maxRep, currentRep
 	local xpString, repString
 
@@ -529,13 +601,13 @@ function Xparky:UpdateBars(dimensions)
 			remainXP = 0
 		end
 
-		XPBar:SetWidth((currentXP/maxXP)*total)
+		Width(XPBar, (currentXP/maxXP)*total)
 		if (restXP + currentXP)/maxXP > 1 then
-			RestBar:SetWidth(total - XPBar:GetWidth())
+			Width(RestBar, total - Width(XPBar, nil))
 		else
-			RestBar:SetWidth((restXP/maxXP)*total + 0.001)
+			Width(RestBar, (restXP/maxXP)*total + 0.001)
 		end
-		NoXPBar:SetWidth((remainXP/maxXP)*total)
+		Width( NoXPBar, (remainXP/maxXP)*total)
 		if db.LegoToGo then
 			xpString = getHex("NoXPBar")..maxXP-currentXP.. L["xp to go"]
 		else
@@ -545,8 +617,8 @@ function Xparky:UpdateBars(dimensions)
 
 	if db.ShowRep then
 		repName, repLevel, minRep, maxRep, currentRep = GetWatchedFactionInfo(tonumber(db.Faction))
-		RepBar:SetWidth(((currentRep - minRep)/(maxRep-minRep))*total)
-		NoRepBar:SetWidth(((maxRep - currentRep)/(maxRep - minRep))*total)
+		Width(RepBar, ((currentRep - minRep)/(maxRep-minRep))*total)
+		Width(NoRepBar, ((maxRep - currentRep)/(maxRep - minRep))*total)
 		if db.LegoToGo then
 			repString = getHex("NoRepBar") .. maxRep - currentRep .. L[" rep to go - "]..getHex(repLevel).."(".. repName..")"
 		else
@@ -555,7 +627,7 @@ function Xparky:UpdateBars(dimensions)
 	end
 	
 	if db.ShowShadow then
-		Shadow:SetWidth(total)
+		Width(Shadow, total)
 	end
 
 	if db.Lego and Lego then
@@ -564,15 +636,16 @@ function Xparky:UpdateBars(dimensions)
 
 	if type(dimensions) == "string" then	
 		if dimensions == "Thickness" then
-			XPBar:SetHeight(db.Thickness)
-			NoXPBar:SetHeight(db.Thickness)
-			RestBar:SetHeight(db.Thickness)
-			RepBar:SetHeight(db.Thickness)
-			NoRepBar:SetHeight(db.Thickness)
-			XPBar.Spark:SetHeight(db.Thickness * 8)
-			XPBar.Spark2:SetHeight(db.Thickness * 8)
-			RepBar.Spark:SetHeight(db.Thickness * 8)
-			RepBar.Spark2:SetHeight(db.Thickness * 8)
+			Height(XPBar, db.Thickness)
+			Height(NoXPBar, db.Thickness)
+			Height(RestBar, db.Thickness)
+			Height(RepBar, db.Thickness)
+			Height(NoRepBar, db.Thickness)
+			Height(XPBar.Spark, db.Thickness * 8)
+			Height(XPBar.Spark2, db.Thickness * 8)
+			Height(RepBar.Spark, db.Thickness * 8)
+			Height(RepBar.Spark2, db.Thickness * 8)
+			Height(Shadow, 5)
 		elseif string.match(dimensions, "Bar") then
 			local Bar = getglobal(dimensions .. "Xparky")
 			SetColour(Bar, Bar.Texture)
@@ -584,13 +657,8 @@ function Xparky:UpdateBars(dimensions)
 			end
 		elseif string.match(dimensions, "Show") then
 			self:ConnectBars()
-		elseif string.match(dimensions, "Width") then
-			if dimensions == "ScreenWidth" then
-				self:AttachBar()
-			else
-				self:AttachBar()
-			end
 		elseif dimensions == "Attach" then
+			self:UpdateBars("Thickness")
 			self:AttachBar()
 		elseif dimensions == "Inside" then
 			self:AttachBar()
