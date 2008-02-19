@@ -12,7 +12,7 @@ local options = {}
 local db 
 local factionTable = {}
 
-local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Anchor, Lego
+--local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, XPAnchor, RepAnchor, Lego
 
 local default = {
 	profile = {
@@ -389,7 +389,7 @@ local function Height(Bar, Size)
 end
 
 local function CreateBar(Bar, Spark)
-	local tex = Bar:CreateTexture(Bar.Texture)
+	local tex = Bar:CreateTexture(Bar.Texture, "OVERLAY")
 	tex:SetTexture(Bar.Texture)
 	tex:ClearAllPoints()
 	tex:SetAllPoints(Bar)
@@ -397,23 +397,34 @@ local function CreateBar(Bar, Spark)
 	Bar.Texture = tex
 	Height(Bar, db.Thickness)
 	if Spark then
+		local barEnd, x, y = "", 0, 0
+		if db.Attach == "top" or db.Attach == "bottom" then
+			barEnd = "RIGHT"
+			x = 5
+			y = 0
+		else
+			barEnd = "BOTTOM"
+			x = 0
+			y = -5
+		end
+		
 		local spark = Bar:CreateTexture(Bar.Name .. "Spark", "OVERLAY")
 		spark:SetTexture(Bar.Spark1)
 		Width(spark, 128)
 		Height(spark, db.Thickness * 5)
 		spark:SetBlendMode("ADD")
 		spark:SetParent(Bar)
-		spark:SetPoint("RIGHT", Bar, "RIGHT", 5, 0)
-		
+		spark:SetPoint(barEnd, Bar, barEnd, x, y)
 		spark:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
 		Bar.Spark = spark
+
 		local spark2 = Bar:CreateTexture(Bar.Name .. "Spark2", "OVERLAY")
 		spark2:SetTexture(Bar.Spark2)
 		Width(spark2, 128)
 		Height(spark2, db.Thickness * 5)
 		spark2:SetBlendMode("ADD")
 		spark2:SetParent(Bar)
-		spark2:SetPoint("RIGHT", Bar, "RIGHT", 5, 0)
+		spark2:SetPoint(barEnd, Bar, barEnd, x, y)
 		spark2:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
 		Bar.Spark2 = spark2
 	end
@@ -448,35 +459,39 @@ function Xparky:InitializeBars()
 	Shadow.Texture:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
 	Shadow.Texture:SetVertexColor(0, 0, 0, 1)
 	Shadow.Texture:SetHeight(5)
-	Shadow.Texture:SetTexCoord(0,1,0,1)
 end
 
 function Xparky:ConnectBars()
 	local Base = Anchor
 	local TabA, SlotB, TabC, SlotD
+	local tlx, tly, trx, try, blx, bly, brx, bry,stlx, stly, strx, stry, sblx, sbly, sbrx, sbry
 
 	if (db.Attach == "bottom" and not db.Inside) or (db.Attach == "top" and db.Inside) then
 		TabA = "TOPLEFT"
 		SlotB = "BOTTOMLEFT"
-		Shadow.Texture:SetTexCoord(0,1,0,1)
+		tlx, tly, trx, try, blx, bly, brx, bry = 1, 0, 1, 1, 0, 0, 0, 1
+		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 1, 0, 0, 1, 1, 1, 0
 	end
 	
 	if (db.Attach == "top" and not db.Inside) or (db.Attach == "bottom" and db.Inside) then
 		TabA = "BOTTOMLEFT"
 		SlotB = "TOPLEFT"
-		Shadow.Texture:SetTexCoord(1,0,1,0)
+		tlx, tly, trx, try, blx, bly, brx, bry = 0, 1, 0, 0, 1, 1, 1, 0
+		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 1, 0, 0, 1, 1, 1, 0
 	end
 
 	if (db.Attach == "left" and not db.Inside) or (db.Attach == "right" and db.Inside) then
 		TabA = "TOPRIGHT"
 		SlotB = "TOPLEFT"
-		Shadow.Texture:SetTexCoord(1,1,0,0)
+		tlx, tly, trx, try, blx, bly, brx, bry = 1, 1, 0, 1, 1, 0, 0, 0
+		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 0, 1, 0, 0, 1, 1, 1
 	end
 
 	if (db.Attach == "right" and not db.Inside) or (db.Attach == "left" and db.Inside) then
 		TabA = "TOPLEFT"
 		SlotB = "TOPRIGHT"
-		Shadow.Texture:SetTexCoord(0,0,1,1)
+		tlx, tly, trx, try, blx, bly, brx, bry = 0, 0, 1, 0, 0, 1, 1, 1
+		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 0, 1, 0, 0, 1, 1, 1
 	end
 
 	if db.Attach == "bottom" or db.Attach == "top" then
@@ -485,8 +500,8 @@ function Xparky:ConnectBars()
 	end
 
 	if db.Attach == "left" or db.Attach == "right" then
-		TabC = "BOTTOM"
-		SlotD = "TOP"
+		TabC = "TOP"
+		SlotD = "BOTTOM"
 	end
 
 	XPBar:Hide()
@@ -497,6 +512,10 @@ function Xparky:ConnectBars()
 		XPBar:ClearAllPoints()
 		XPBar:SetPoint(TabA, Base, SlotB)
 		XPBar:SetFrameLevel( NoXPBar:GetFrameLevel() + 1)
+		--XPBar.Spark:ClearAllPoints()
+		--XPBar.Spark:SetPoint(TabC, Base, SlotD)
+		--XPBar.Spark2:ClearAllPoints()
+		--XPBar.Spark2:SetPoint(TabC, Base, SlotD)
 		RestBar:ClearAllPoints()
 		RestBar:SetPoint(TabC, XPBar, SlotD)
 		NoXPBar:ClearAllPoints()
@@ -504,6 +523,11 @@ function Xparky:ConnectBars()
 		XPBar:Show()
 		RestBar:Show()
 		NoXPBar:Show()
+		XPBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
+		XPBar.Spark:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
+		XPBar.Spark2:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
+		NoXPBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
+		RestBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
 		Base = XPBar
 	end 
 	
@@ -513,11 +537,17 @@ function Xparky:ConnectBars()
 	if db.ShowRep then
 		RepBar:ClearAllPoints()
 		RepBar:SetPoint(TabA, Base, SlotB )
+		--RepBar.Spark:SetPoint(TabC, RepBar, SlotD)
+		--RepBar.Spark2:SetPoint(TabC, RepBar, SlotD)
 		NoRepBar:ClearAllPoints()
 		NoRepBar:SetPoint(TabC, RepBar, SlotD)
 		RepBar:SetFrameLevel( NoRepBar:GetFrameLevel() + 1)
 		RepBar:Show()
-		NoRepBar:Show()
+		NoRepBar:Show() 
+		RepBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
+		NoRepBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
+		RepBar.Spark:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
+		RepBar.Spark2:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
 		Base = RepBar
 	end
 	
@@ -526,6 +556,7 @@ function Xparky:ConnectBars()
 	if db.ShowShadow then
 		Shadow:ClearAllPoints()
 		Shadow:SetPoint(TabA, Base, SlotB)
+		Shadow.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
 		Shadow:Show()
 	end
 end
@@ -588,7 +619,7 @@ end
 
 
 function Xparky:UpdateBars(dimensions)
-	local total =  Anchor:GetParent():GetWidth()
+	local total =  Width(Anchor:GetParent(), nil)
 	local currentXP, maxXP, restXP, remainXP, repName, repLevel, minRep, maxRep, currentRep
 	local xpString, repString
 
