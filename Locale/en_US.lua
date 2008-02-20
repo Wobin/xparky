@@ -61,18 +61,28 @@ if L then
 	L["xp to go"] = true
 	L[" rep to go - "] = true
 
-
+	L["Documentation"] = true
+	L["Description"] = true
+	L["About"] = true
+	L["FAQ"] = true
 	L["DESCRIPTION"] =
 [[ Xparky is a xp/rep bar that is designed to be a replacement for FuXPFu, a bar that previously attached to the FuBar. 
-Xparky has been rewritten to allow for a more dynamic assignment of bar locations, permitting the user to attach the 
-bars to any side of any named frame on the screen. Xparky bars can also be placed inside a specified frame to allow 
-for setups that include attaching to the inside edge of the WorldFrame for the minimalist approach.
-]] = true
+
+Xparky has been rewritten to allow for a more dynamic assignment of bar locations, permitting the user to attach the bars to any side of any named frame on the screen. Xparky bars can also be placed inside a specified frame to allow for setups that include attaching to the inside edge of the WorldFrame for the minimalist approach.  ]] 
 	L["FAQ_TEXT"] = 
 [[
-Xparky is fairly simple to set up and run. When you start it, it will create a LegoBlock 
+Xparky is fairly simple to set up and run. When you start it, it will create a LegoBlock with the xp bar attached to the bottom. 
 
-]] = true
+To change the frame the bars are connected to select: Bars->Frame Link in the Xparky config window.
+
+You can then either type in the frame name or use the button to activate the mouse selector and select your frame by clicking on it with the active cursor.
+
+Set the side you wish the bars to be on as well as if you want the bars on the inside or outside of the frame.
+
+Bar colours can be selected in Bars->Colours and the appropriate settings therein.
+
+You can hide or show the various screen aspects in the first Buttons panel.
+]]
 	L["ADDON_INFO"] =
 [[
 Name: Xparky
@@ -80,4 +90,5 @@ Version: 1.0
 Author: Wobin
 Props: Bant, for the original textures and concept
 ]]
+
 end

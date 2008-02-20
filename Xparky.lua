@@ -12,7 +12,7 @@ local options = {}
 local db 
 local factionTable = {}
 
-local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, XPAnchor, RepAnchor, Lego
+local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Anchor, Lego
 
 local default = {
 	profile = {
@@ -110,6 +110,7 @@ options.args.bars = {
 	type = "group",
 	name = L["Bars"],
 	desc = L["Bar Modifications"],
+	order = 1,
 	args = {
 		showxpbar = {
 			order = 1,
@@ -237,7 +238,7 @@ options.args.bars = {
 		},
 	},
 }
-option.args.framelink = {
+options.args.framelink = {
 	type = "group",
 	name = L["Frame Link"],
 	order = 1,
@@ -279,31 +280,49 @@ option.args.framelink = {
 			arg = "Inside"
 		},
 	},
-},
+}
 
-option.args.faq = {
-	name = L["Help"],
-	desc = L["Help information"],
+options.args.help = {
 	type = "group",
 	order = 100,
+	name = L["Documentation"],
 	args = {
-		Basic = {
-			type = "description",
-			name = L["DESCRIPTION"],
-			order = 1
+		desc = {
+			type = "group",
+			name = L["Description"],
+			args = {
+				text = {
+					type = "description",
+					name = L["DESCRIPTION"],
+					order = 1
+				},
+			},
 		},
-		FAQ = {
-			type = "description",
-			name = L["FAQ_TEXT"],
-			order = 2,
+		faq = { 
+			type = "group",
+			name = L["FAQ"],
+			args = {
+				text = {
+					type = "description",
+					name = L["FAQ_TEXT"],
+					order = 2
+				},
+			},
 		},
-		Info = {
-			type = "description",
-			name = L["ADDON_INFO"],
-			order = 3
+		about = {
+			type = "group",
+			name = L["About"],
+			args = {
+				text = {
+					type = "description",
+					name = L["ADDON_INFO"],
+					order = 3
+				}
+			}
 		}
 	}
 }
+
 --[[ Local helper functions --]]
 --
 local function getHex(Bar)
@@ -343,6 +362,7 @@ end
 
 options.args.factions = {
 	type = "group",
+	order = 2,
 	name = L["Factions"],
 	args = {
 		factionlist = {
@@ -445,7 +465,7 @@ local function CreateBar(Bar, Spark)
 	return Bar
 end
 
-local function GenerateBar(BarName, Spark, Anchor)
+local function GenerateBar(BarName, Spark)
 	local Bar = CreateFrame("Frame", BarName .. "Xparky", Anchor)
 	Bar.Name = BarName
 	Bar.Texture = "Interface\\AddOns\\Xparky\\Textures\\texture.tga"
@@ -456,31 +476,23 @@ end
 
 
 function Xparky:InitializeBars()
-	XPAnchor = CreateFrame("Frame", "XparkyXPAnchor", Lego or UIParent)
-	XPAnchor:SetWidth(1)
-	XPAnchor:SetHeight(1)
-	XPAnchor:Show()
-	RepAnchor = CreateFrame("Frame", "XparkyRepAnchor", Lego or UIParent)
-	RepAnchor:SetWidth(1)
-	RepAnchor:SetHeight(1)
-	RepAnchor:Show()
-	XPBar = GenerateBar("XPBar", true, XPAnchor)
-	NoXPBar = GenerateBar("NoXPBar", false, XPAnchor)
-	RepBar = GenerateBar("RepBar", true, RepAnchor)
-	NoRepBar = GenerateBar("NoRepBar", false, RepAnchor)
-	RestBar = GenerateBar("RestBar", false, XPAnchor)
-	XPShadow = GenerateBar("XPShadow", false, XPAnchor)
-	XPShadow.Texture:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
-	XPShadow.Texture:SetVertexColor(0, 0, 0, 1)
-	XPShadow.Texture:SetHeight(5)
-	RepShadow = GenerateBar("RepShadow", false, RepAnchor)
-	RepShadow.Texture:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
-	RepShadow.Texture:SetVertexColor(0, 0, 0, 1)
-	RepShadow.Texture:SetHeight(5)
+	Anchor = CreateFrame("Frame", "XparkyXPAnchor", Lego or UIParent)
+	Anchor:SetWidth(1)
+	Anchor:SetHeight(1)
+	Anchor:Show()
+	XPBar = GenerateBar("XPBar", true)
+	NoXPBar = GenerateBar("NoXPBar")
+	RepBar = GenerateBar("RepBar", true)
+	NoRepBar = GenerateBar("NoRepBar")
+	RestBar = GenerateBar("RestBar")
+	Shadow = GenerateBar("XPShadow")
+	Shadow.Texture:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
+	Shadow.Texture:SetVertexColor(0, 0, 0, 1)
+	Shadow.Texture:SetHeight(5)
 end
 
 function Xparky:ConnectBars()
-	local Base = XPAnchor
+	local Base = Anchor
 	local TabA, SlotB, TabC, SlotD
 	local tlx, tly, trx, try, blx, bly, brx, bry,stlx, stly, strx, stry, sblx, sbly, sbrx, sbry
 
