@@ -12,7 +12,7 @@ local options = {}
 local db 
 local factionTable = {}
 
---local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, XPAnchor, RepAnchor, Lego
+local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, XPAnchor, RepAnchor, Lego
 
 local default = {
 	profile = {
@@ -235,52 +235,75 @@ options.args.bars = {
 				},
 			},
 		},
-		framelink = {
-			type = "group",
-			name = L["Frame Link"],
+	},
+}
+option.args.framelink = {
+	type = "group",
+	name = L["Frame Link"],
+	order = 1,
+	args = {
+		attach = {
 			order = 1,
-			args = {
-				attach = {
-					order = 1,
-					type = "execute",
-					name = L["Hook to frame"],
-					desc = L["Click here to activate the frame selector"],
-					func = function() mouser:Start() end
-				},
-				space = {
-					order = 2,
-					name = "",
-					desc = "",
-					type = "description"
-				},
-				attached = {
-					order = 3,
-					type = "input",
-					name = L["Frame Connected to"],
-					desc = L["The name of the frame to connect to"],
-					arg = "ConnectedFrame",
-					set = function(k,v) db.ConnectedFrame = v; db.Detached = false; Xparky:AttachBar() end
-				},
-				attachto = {
-					order = 4,
-					name = L["Attach to:"],
-					desc = L["Which side to attach to"],
-					type = "select",
-					values = { top = L["Top"], bottom = L["Bottom"], left = L["Left"], right = L["Right"] },
-					arg = "Attach"
-				},
-				insideframe = {
-					order = 5,
-					name = L["Inside Frame?"],
-					desc = L["Attach to the inside of the frame"],
-					type = "toggle",
-					arg = "Inside"
-				},
-			},
+			type = "execute",
+			name = L["Hook to frame"],
+			desc = L["Click here to activate the frame selector"],
+			func = function() mouser:Start() end
 		},
+		space = {
+			order = 2,
+			name = "",
+			desc = "",
+			type = "description"
+		},
+		attached = {
+			order = 3,
+			type = "input",
+			name = L["Frame Connected to"],
+			desc = L["The name of the frame to connect to"],
+			arg = "ConnectedFrame",
+			set = function(k,v) db.ConnectedFrame = v; db.Detached = false; Xparky:AttachBar() end
+		},
+		attachto = {
+			order = 4,
+			name = L["Attach to:"],
+			desc = L["Which side to attach to"],
+			type = "select",
+			values = { top = L["Top"], bottom = L["Bottom"], left = L["Left"], right = L["Right"] },
+			arg = "Attach"
+		},
+		insideframe = {
+			order = 5,
+			name = L["Inside Frame?"],
+			desc = L["Attach to the inside of the frame"],
+			type = "toggle",
+			arg = "Inside"
+		},
+	},
+},
+
+option.args.faq = {
+	name = L["Help"],
+	desc = L["Help information"],
+	type = "group",
+	order = 100,
+	args = {
+		Basic = {
+			type = "description",
+			name = L["DESCRIPTION"],
+			order = 1
+		},
+		FAQ = {
+			type = "description",
+			name = L["FAQ_TEXT"],
+			order = 2,
+		},
+		Info = {
+			type = "description",
+			name = L["ADDON_INFO"],
+			order = 3
+		}
 	}
 }
-
 --[[ Local helper functions --]]
 --
 local function getHex(Bar)
@@ -422,7 +445,7 @@ local function CreateBar(Bar, Spark)
 	return Bar
 end
 
-local function GenerateBar(BarName, Spark)
+local function GenerateBar(BarName, Spark, Anchor)
 	local Bar = CreateFrame("Frame", BarName .. "Xparky", Anchor)
 	Bar.Name = BarName
 	Bar.Texture = "Interface\\AddOns\\Xparky\\Textures\\texture.tga"
@@ -433,23 +456,31 @@ end
 
 
 function Xparky:InitializeBars()
-	Anchor = CreateFrame("Frame", "XparkyAnchor", Lego or UIParent)
-	Anchor:SetWidth(1)
-	Anchor:SetHeight(1)
-	Anchor:Show()
-	XPBar = GenerateBar("XPBar", true)
-	NoXPBar = GenerateBar("NoXPBar")
-	RepBar = GenerateBar("RepBar", true)
-	NoRepBar = GenerateBar("NoRepBar")
-	RestBar = GenerateBar("RestBar")
-	Shadow = GenerateBar("Shadow")
-	Shadow.Texture:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
-	Shadow.Texture:SetVertexColor(0, 0, 0, 1)
-	Shadow.Texture:SetHeight(5)
+	XPAnchor = CreateFrame("Frame", "XparkyXPAnchor", Lego or UIParent)
+	XPAnchor:SetWidth(1)
+	XPAnchor:SetHeight(1)
+	XPAnchor:Show()
+	RepAnchor = CreateFrame("Frame", "XparkyRepAnchor", Lego or UIParent)
+	RepAnchor:SetWidth(1)
+	RepAnchor:SetHeight(1)
+	RepAnchor:Show()
+	XPBar = GenerateBar("XPBar", true, XPAnchor)
+	NoXPBar = GenerateBar("NoXPBar", false, XPAnchor)
+	RepBar = GenerateBar("RepBar", true, RepAnchor)
+	NoRepBar = GenerateBar("NoRepBar", false, RepAnchor)
+	RestBar = GenerateBar("RestBar", false, XPAnchor)
+	XPShadow = GenerateBar("XPShadow", false, XPAnchor)
+	XPShadow.Texture:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
+	XPShadow.Texture:SetVertexColor(0, 0, 0, 1)
+	XPShadow.Texture:SetHeight(5)
+	RepShadow = GenerateBar("RepShadow", false, RepAnchor)
+	RepShadow.Texture:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
+	RepShadow.Texture:SetVertexColor(0, 0, 0, 1)
+	RepShadow.Texture:SetHeight(5)
 end
 
 function Xparky:ConnectBars()
-	local Base = Anchor
+	local Base = XPAnchor
 	local TabA, SlotB, TabC, SlotD
 	local tlx, tly, trx, try, blx, bly, brx, bry,stlx, stly, strx, stry, sblx, sbly, sbrx, sbry
 

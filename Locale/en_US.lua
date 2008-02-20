@@ -60,4 +60,24 @@ if L then
 
 	L["xp to go"] = true
 	L[" rep to go - "] = true
+
+
+	L["DESCRIPTION"] =
+[[ Xparky is a xp/rep bar that is designed to be a replacement for FuXPFu, a bar that previously attached to the FuBar. 
+Xparky has been rewritten to allow for a more dynamic assignment of bar locations, permitting the user to attach the 
+bars to any side of any named frame on the screen. Xparky bars can also be placed inside a specified frame to allow 
+for setups that include attaching to the inside edge of the WorldFrame for the minimalist approach.
+]] = true
+	L["FAQ_TEXT"] = 
+[[
+Xparky is fairly simple to set up and run. When you start it, it will create a LegoBlock 
+
+]] = true
+	L["ADDON_INFO"] =
+[[
+Name: Xparky
+Version: 1.0
+Author: Wobin
+Props: Bant, for the original textures and concept
+]]
 end
