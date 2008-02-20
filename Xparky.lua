@@ -397,24 +397,12 @@ local function CreateBar(Bar, Spark)
 	Bar.Texture = tex
 	Height(Bar, db.Thickness)
 	if Spark then
-		local barEnd, x, y = "", 0, 0
-		if db.Attach == "top" or db.Attach == "bottom" then
-			barEnd = "RIGHT"
-			x = 5
-			y = 0
-		else
-			barEnd = "BOTTOM"
-			x = 0
-			y = -5
-		end
-		
 		local spark = Bar:CreateTexture(Bar.Name .. "Spark", "OVERLAY")
 		spark:SetTexture(Bar.Spark1)
 		Width(spark, 128)
 		Height(spark, db.Thickness * 5)
 		spark:SetBlendMode("ADD")
 		spark:SetParent(Bar)
-		spark:SetPoint(barEnd, Bar, barEnd, x, y)
 		spark:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
 		Bar.Spark = spark
 
@@ -424,7 +412,6 @@ local function CreateBar(Bar, Spark)
 		Height(spark2, db.Thickness * 5)
 		spark2:SetBlendMode("ADD")
 		spark2:SetParent(Bar)
-		spark2:SetPoint(barEnd, Bar, barEnd, x, y)
 		spark2:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
 		Bar.Spark2 = spark2
 	end
@@ -504,6 +491,17 @@ function Xparky:ConnectBars()
 		SlotD = "BOTTOM"
 	end
 
+	local barEnd, x, y = "", 0, 0
+	if db.Attach == "top" or db.Attach == "bottom" then
+		barEnd = "RIGHT"
+		x = 5
+		y = 0
+	else
+		barEnd = "BOTTOM"
+		x = 0
+		y = -5
+	end
+
 	XPBar:Hide()
 	RestBar:Hide()
 	NoXPBar:Hide()
@@ -512,10 +510,10 @@ function Xparky:ConnectBars()
 		XPBar:ClearAllPoints()
 		XPBar:SetPoint(TabA, Base, SlotB)
 		XPBar:SetFrameLevel( NoXPBar:GetFrameLevel() + 1)
-		--XPBar.Spark:ClearAllPoints()
-		--XPBar.Spark:SetPoint(TabC, Base, SlotD)
-		--XPBar.Spark2:ClearAllPoints()
-		--XPBar.Spark2:SetPoint(TabC, Base, SlotD)
+		XPBar.Spark:ClearAllPoints()
+		XPBar.Spark:SetPoint(barEnd, Base, barEnd, x, y)
+		XPBar.Spark2:ClearAllPoints()
+		XPBar.Spark2:SetPoint(barEnd, Base, barEnd, x, y)
 		RestBar:ClearAllPoints()
 		RestBar:SetPoint(TabC, XPBar, SlotD)
 		NoXPBar:ClearAllPoints()
@@ -537,8 +535,8 @@ function Xparky:ConnectBars()
 	if db.ShowRep then
 		RepBar:ClearAllPoints()
 		RepBar:SetPoint(TabA, Base, SlotB )
-		--RepBar.Spark:SetPoint(TabC, RepBar, SlotD)
-		--RepBar.Spark2:SetPoint(TabC, RepBar, SlotD)
+		RepBar.Spark:SetPoint(barEnd, RepBar, barEnd, x, y)
+		RepBar.Spark2:SetPoint(barEnd, RepBar, barEnd, x, y)
 		NoRepBar:ClearAllPoints()
 		NoRepBar:SetPoint(TabC, RepBar, SlotD)
 		RepBar:SetFrameLevel( NoRepBar:GetFrameLevel() + 1)
@@ -560,52 +558,55 @@ function Xparky:ConnectBars()
 		Shadow:Show()
 	end
 end
+do
 
-local timeout = 0
+	local timeout = 0
 
-function Xparky:AttachBar(Bar)
-	local Foundation = db.ConnectedFrame and getglobal(db.ConnectedFrame) or nil
-	if Foundation then
-		Anchor:ClearAllPoints()
-		
-		if db.Attach == "bottom" then
-			if db.Inside then
-				Anchor:SetPoint("BOTTOMLEFT", Foundation, "BOTTOMLEFT")
-			else
-				Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, -1)
-			end
-		elseif db.Attach == "top" then
-			if db.Inside then
-				Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
-			else
-				Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT", 0, 1)
-			end
-		elseif db.Attach == "left" then
-			if db.Inside then
-				Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
-			else
-				Anchor:SetPoint("TOPRIGHT", Foundation, "TOPLEFT", 0, 1)
-			end
-		elseif db.Attach == "right" then
-			if db.Inside then
-				Anchor:SetPoint("TOPRIGHT", Foundation, "TOPRIGHT")
-			else
-				Anchor:SetPoint("TOPLEFT", Foundation, "TOPRIGHT", 0, 1)
-			end
-		end
+	function Xparky:AttachBar(Bar)
+		local Foundation = db.ConnectedFrame and getglobal(db.ConnectedFrame) or nil
+		if Foundation then
+			Anchor:ClearAllPoints()
 
-		Anchor:SetParent(Foundation)
-		self:ConnectBars()
-		self:UpdateBars()
-	else
-		if timeout > 5 then
-			self:Print(L["Cannot find frame specified"])
-			timeout = 0
-			return
-		end
-		self:ScheduleTimer("AttachBar", 1, self)
-		timeout = timeout + 1
-	end 
+			if db.Attach == "bottom" then
+				if db.Inside then
+					Anchor:SetPoint("BOTTOMLEFT", Foundation, "BOTTOMLEFT")
+				else
+					Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, -1)
+				end
+			elseif db.Attach == "top" then
+				if db.Inside then
+					Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
+				else
+					Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT", 0, 1)
+				end
+			elseif db.Attach == "left" then
+				if db.Inside then
+					Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
+				else
+					Anchor:SetPoint("TOPRIGHT", Foundation, "TOPLEFT", 0, 1)
+				end
+			elseif db.Attach == "right" then
+				if db.Inside then
+					Anchor:SetPoint("TOPRIGHT", Foundation, "TOPRIGHT")
+				else
+					Anchor:SetPoint("TOPLEFT", Foundation, "TOPRIGHT", 0, 1)
+				end
+			end
+
+			Anchor:SetParent(Foundation)
+			self:ConnectBars()
+			self:UpdateBars()
+		else
+			if timeout > 5 then
+				self:Print(L["Cannot find frame specified"])
+				timeout = 0
+				return
+			end
+			self:ScheduleTimer("AttachBar", 1, self)
+			timeout = timeout + 1
+		end 
+	end
+ 
 end
 
 function Xparky:InitialiseEvents()
