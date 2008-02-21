@@ -40,6 +40,10 @@ if L then
 	L["Right"] = true
 	L["Inside Frame?"] = true
 	L["Attach to the inside of the frame"] = true
+	L["X offset"] = true
+	L["How far on the X axis to offset the bars"] = true
+	L["Y offset"] = true
+	L["How far on the Y axis to offset the bars"] = true
 
 	L["Colours"] = true
 	L["Colours of the bars"] = true

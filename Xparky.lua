@@ -36,6 +36,8 @@ local default = {
 		Attach = "bottom",
 		Inside = false,
 		ConnectedFrame = "LegoXparky",
+		xOffset = 0,
+		yOffset = 0,
 		Lego = true,
 		LegoToGo = false,
 		LegoDB = {
@@ -45,17 +47,7 @@ local default = {
 			showIcon = false,
 			scale = 1,
 			group = nil
-		},
-		XPBar = { 
-			Foundation = "LegoXparky",
-			Side = "bottom",
-			Inside = false,
-		},
-		RepBar = {
-			Foundation = "XPBar",
-			Side = "bottom",
-			Inside = "false"
-		},
+		}
 	}
 }
 
@@ -279,6 +271,25 @@ options.args.framelink = {
 			type = "toggle",
 			arg = "Inside"
 		},
+		spacer = {
+			order = 6,
+			name = "",
+			type = "description"
+		},
+		xoffset = {
+			order = 7,
+			name = L["X offset"],
+			desc = L["How far on the X axis to offset the bars"],
+			type = "input",
+			arg = "xOffset"
+		},
+		yoffset = {
+			order = 8,
+			name = L["Y offset"],
+			desc = L["How far on the Y axis to offset the bars"],
+			type = "input",
+			arg = "yOffset"
+		},
 	},
 }
 
@@ -432,8 +443,8 @@ local function Height(Bar, Size)
 end
 
 local function CreateBar(Bar, Spark)
-	local tex = Bar:CreateTexture(Bar.Texture, "OVERLAY")
-	tex:SetTexture(Bar.Texture)
+	local tex = Bar:CreateTexture(Bar.Name .. "Texture", "OVERLAY")
+	tex:SetTexture(Bar.TextureFile)
 	tex:ClearAllPoints()
 	tex:SetAllPoints(Bar)
 	tex:Show()
@@ -441,8 +452,7 @@ local function CreateBar(Bar, Spark)
 	Height(Bar, db.Thickness)
 	if Spark then
 		local spark = Bar:CreateTexture(Bar.Name .. "Spark", "OVERLAY")
-		spark:SetTexture(Bar.Spark1)
-		Width(spark, 128)
+		spark:SetTexture(Bar.Spark1File)
 		Height(spark, db.Thickness * 5)
 		spark:SetBlendMode("ADD")
 		spark:SetParent(Bar)
@@ -450,8 +460,7 @@ local function CreateBar(Bar, Spark)
 		Bar.Spark = spark
 
 		local spark2 = Bar:CreateTexture(Bar.Name .. "Spark2", "OVERLAY")
-		spark2:SetTexture(Bar.Spark2)
-		Width(spark2, 128)
+		spark2:SetTexture(Bar.Spark2File)
 		Height(spark2, db.Thickness * 5)
 		spark2:SetBlendMode("ADD")
 		spark2:SetParent(Bar)
@@ -468,9 +477,9 @@ end
 local function GenerateBar(BarName, Spark)
 	local Bar = CreateFrame("Frame", BarName .. "Xparky", Anchor)
 	Bar.Name = BarName
-	Bar.Texture = "Interface\\AddOns\\Xparky\\Textures\\texture.tga"
-	Bar.Spark1 =  "Interface\\AddOns\\Xparky\\Textures\\glow.tga"
-	Bar.Spark2 =  "Interface\\AddOns\\Xparky\\Textures\\glow2.tga"
+	Bar.TextureFile = "Interface\\AddOns\\Xparky\\Textures\\texture.tga"
+	Bar.Spark1File =  "Interface\\AddOns\\Xparky\\Textures\\glow.tga"
+	Bar.Spark2File =  "Interface\\AddOns\\Xparky\\Textures\\glow2.tga"
 	return CreateBar(Bar, Spark)
 end
 
@@ -537,12 +546,14 @@ function Xparky:ConnectBars()
 	local barEnd, x, y = "", 0, 0
 	if db.Attach == "top" or db.Attach == "bottom" then
 		barEnd = "RIGHT"
-		x = 5
+		x = 10
 		y = 0
-	else
+	end
+
+	if db.Attach == "left" or db.Attach == "right" then
 		barEnd = "BOTTOM"
 		x = 0
-		y = -5
+		y = -10
 	end
 
 	XPBar:Hide()
@@ -550,13 +561,21 @@ function Xparky:ConnectBars()
 	NoXPBar:Hide()
 
 	if db.ShowXP then
+		XPBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
+		XPBar.Spark:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
+		XPBar.Spark2:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
+		NoXPBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
+		RestBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
+
 		XPBar:ClearAllPoints()
 		XPBar:SetPoint(TabA, Base, SlotB)
 		XPBar:SetFrameLevel( NoXPBar:GetFrameLevel() + 1)
 		XPBar.Spark:ClearAllPoints()
-		XPBar.Spark:SetPoint(barEnd, Base, barEnd, x, y)
+		XPBar.Spark:SetPoint(barEnd, XPBar, barEnd, x, y)
+		XPBar.Spark:SetParent(XPBar)
 		XPBar.Spark2:ClearAllPoints()
-		XPBar.Spark2:SetPoint(barEnd, Base, barEnd, x, y)
+		XPBar.Spark2:SetPoint(barEnd, XPBar, barEnd, x, y)
+		XPBar.Spark2:SetParent(XPBar)
 		RestBar:ClearAllPoints()
 		RestBar:SetPoint(TabC, XPBar, SlotD)
 		NoXPBar:ClearAllPoints()
@@ -564,11 +583,6 @@ function Xparky:ConnectBars()
 		XPBar:Show()
 		RestBar:Show()
 		NoXPBar:Show()
-		XPBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-		XPBar.Spark:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
-		XPBar.Spark2:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
-		NoXPBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-		RestBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
 		Base = XPBar
 	end 
 	
@@ -576,8 +590,15 @@ function Xparky:ConnectBars()
 	NoRepBar:Hide()
 	
 	if db.ShowRep then
+		RepBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
+		NoRepBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
+		RepBar.Spark:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
+		RepBar.Spark2:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
+
 		RepBar:ClearAllPoints()
 		RepBar:SetPoint(TabA, Base, SlotB )
+		RepBar.Spark:ClearAllPoints()
+		RepBar.Spark2:ClearAllPoints()
 		RepBar.Spark:SetPoint(barEnd, RepBar, barEnd, x, y)
 		RepBar.Spark2:SetPoint(barEnd, RepBar, barEnd, x, y)
 		NoRepBar:ClearAllPoints()
@@ -585,10 +606,6 @@ function Xparky:ConnectBars()
 		RepBar:SetFrameLevel( NoRepBar:GetFrameLevel() + 1)
 		RepBar:Show()
 		NoRepBar:Show() 
-		RepBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-		NoRepBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-		RepBar.Spark:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
-		RepBar.Spark2:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
 		Base = RepBar
 	end
 	
@@ -612,27 +629,27 @@ do
 
 			if db.Attach == "bottom" then
 				if db.Inside then
-					Anchor:SetPoint("BOTTOMLEFT", Foundation, "BOTTOMLEFT")
+					Anchor:SetPoint("BOTTOMLEFT", Foundation, "BOTTOMLEFT", db.xOffset, db.yOffset )
 				else
-					Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", 0, -1)
+					Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", db.xOffset, db.yOffset )
 				end
 			elseif db.Attach == "top" then
 				if db.Inside then
-					Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
+					Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT", db.xOffset, db.yOffset )
 				else
-					Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT", 0, 1)
+					Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT", db.xOffset, db.yOffset )
 				end
 			elseif db.Attach == "left" then
 				if db.Inside then
-					Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT")
+					Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT", db.xOffset, db.yOffset )
 				else
-					Anchor:SetPoint("TOPRIGHT", Foundation, "TOPLEFT", 0, 1)
+					Anchor:SetPoint("TOPRIGHT", Foundation, "TOPLEFT", db.xOffset, db.yOffset )
 				end
 			elseif db.Attach == "right" then
 				if db.Inside then
-					Anchor:SetPoint("TOPRIGHT", Foundation, "TOPRIGHT")
+					Anchor:SetPoint("TOPRIGHT", Foundation, "TOPRIGHT", db.xOffset, db.yOffset )
 				else
-					Anchor:SetPoint("TOPLEFT", Foundation, "TOPRIGHT", 0, 1)
+					Anchor:SetPoint("TOPLEFT", Foundation, "TOPRIGHT", db.xOffset, db.yOffset )
 				end
 			end
 
@@ -676,13 +693,16 @@ function Xparky:UpdateBars(dimensions)
 			remainXP = 0
 		end
 
-		Width(XPBar, (currentXP/maxXP)*total)
+		Width(XPBar, (currentXP/maxXP)*total + 0.001)
 		if (restXP + currentXP)/maxXP > 1 then
-			Width(RestBar, total - Width(XPBar, nil))
+			Width(RestBar, total - Width(XPBar, nil) + 0.001)
 		else
 			Width(RestBar, (restXP/maxXP)*total + 0.001)
 		end
-		Width( NoXPBar, (remainXP/maxXP)*total)
+		Width( NoXPBar, (remainXP/maxXP)*total + 0.001)
+
+		Width( XPBar.Spark, 128)
+		Width( XPBar.Spark2, 128)
 		if db.LegoToGo then
 			xpString = getHex("NoXPBar")..maxXP-currentXP.. L["xp to go"]
 		else
@@ -691,14 +711,16 @@ function Xparky:UpdateBars(dimensions)
 	end
 
 	if db.ShowRep then
-		repName, repLevel, minRep, maxRep, currentRep = GetWatchedFactionInfo(tonumber(db.Faction))
-		Width(RepBar, ((currentRep - minRep)/(maxRep-minRep))*total)
-		Width(NoRepBar, ((maxRep - currentRep)/(maxRep - minRep))*total)
-		if db.LegoToGo then
-			repString = getHex("NoRepBar") .. maxRep - currentRep .. L[" rep to go - "]..getHex(repLevel).."(".. repName..")"
-		else
-			repString = getHex("RepBar").. currentRep.."|r/"..getHex("NoRepBar") .. maxRep .."|r"
-		end
+		repName, repLevel, minRep, maxRep, currentRep = GetWatchedFactionInfo()
+			Width(RepBar, ((currentRep - minRep)/(maxRep-minRep))*total + 0.001)
+			Width(NoRepBar, ((maxRep - currentRep)/(maxRep - minRep))*total + 0.001)
+			if db.LegoToGo then
+				repString = getHex("NoRepBar") .. maxRep - currentRep .. L[" rep to go - "]..getHex(repLevel).."(".. repName..")"
+			else
+				repString = getHex("RepBar").. currentRep - minRep.."|r/"..getHex("NoRepBar") .. maxRep .."|r"
+			end
+			Width(RepBar.Spark, 128)
+			Width(RepBar.Spark2, 128)
 	end
 	
 	if db.ShowShadow then
@@ -732,6 +754,8 @@ function Xparky:UpdateBars(dimensions)
 			end
 		elseif string.match(dimensions, "Show") then
 			self:ConnectBars()
+		elseif string.match(dimensions, "Offset") then
+			self:AttachBar()
 		elseif dimensions == "Attach" then
 			self:UpdateBars("Thickness")
 			self:AttachBar()
