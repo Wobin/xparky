@@ -95,7 +95,7 @@ You can hide or show the various screen aspects in the first Buttons panel.
 	L["ADDON_INFO"] =
 [[
 Name: Xparky
-Version: 1.0
+Version: 1.1
 Author: Wobin
 Props: Bant, for the original textures and concept
 ]]

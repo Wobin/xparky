@@ -127,21 +127,28 @@ options.args.bars = {
 			type = "toggle",
 			arg = "ShowShadow"
 		},
-		showlego = {
+		showtogo = {
 			order = 4,
+			name = L["XP/Rep to go"],
+			desc = L["Show the amount present or the amount to go"],
+			type = "toggle",
+			arg = "LegoToGo"
+		},
+		showlego = {
+			order = 5,
 			name = L["Show Legoblock"],
 			desc = L["Give a textbox with xp/rep details"],
 			type = "toggle",
 			arg = "Lego"
 		},
 		space = {
-			order = 4,
+			order = 6,
 			name = "    ",
 			desc = "",
 			type = "description"
 		},
 		xpspark = {
-			order = 5,
+			order = 7,
 			name = L["XP Spark Intensity"],
 			desc = L["How strong the XP spark is"],
 			type = "range",
@@ -149,7 +156,7 @@ options.args.bars = {
 			arg = "Spark",
 		},
 		repspark = {
-			order = 6,
+			order = 8,
 			name = L["Reputation Spark Intensity"],
 			desc = L["How strong the Reputation spark is"],
 			type = "range",
@@ -157,22 +164,27 @@ options.args.bars = {
 			arg = "Spark2"
 		},
 		thick = {
-			order = 7,
+			order = 9,
 			name = L["Bar Thickness"],
 			desc = L["How thick the bars are"],
 			type = "range",
 			min = 1.5, max = 8, step = 0.1,
 			arg = "Thickness"
 		},
+		spacer = {
+			order = 10,
+			name = "",
+			type = "description"
+		},
 		hide = {
-			order = 8,
+			order = 11,
 			name = L["Hide Bars"],
 			desc = L["Hide the bars til you mouseover them"],
 			type = "toggle",
 			arg = "MouseHide",
 		},
 		tooltip = {
-			order = 9,
+			order = 12,
 			name = L["Show Tooltip"],
 			desc = L["Show a tooltip with the XP/Rep info when moused over"],
 			type = "toggle",
@@ -182,7 +194,7 @@ options.args.bars = {
 			type = "group",
 			name = L["Colours"],
 			desc = L["Colours of the bars"],
-			order = 8,
+			order = 13,
 			get = function(info)
 				local t = db.barColours[info.arg] or { Red = 1, Green = 1, Blue = 1, Alpha = 1}
 				return t.Red, t.Green, t.Blue, t.Alpha

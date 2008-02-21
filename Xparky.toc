@@ -1,6 +1,7 @@
 ## Interface: 20300
 ## Title: Xparky
 ## Author: Wobin
+## Version: 1.1
 ## Notes: Standalone of FuXPFu - Now sticks to anything!
 ## SavedVariables: XparkyDB
 ## X-Embeds: Ace3
