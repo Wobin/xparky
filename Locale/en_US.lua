@@ -16,6 +16,9 @@ if L then
 	
 	L["Show Legoblock"] = true
 	L["Give a textbox with xp/rep details"] = true
+	
+	L["XP/Rep to go"] = true
+	L["Show the amount present or the amount to go"] = true
 
 	L["XP Spark Intensity"] = true
 	L["How strong the XP spark is"] = true
