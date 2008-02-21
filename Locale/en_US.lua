@@ -24,6 +24,11 @@ if L then
 
 	L["Bar Thickness"] = true
 	L["How thick the bars are"] = true
+	
+	L["Hide Bars"] = true
+	L["Hide the bars til you mouseover them"] = true
+	L["Show Tooltip"] = true
+	L["Show a tooltip with the XP/Rep info when moused over"] = true
 
 	L["Attachment Method"] = true
 	L["Frame Link"] = true

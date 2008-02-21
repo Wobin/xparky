@@ -12,7 +12,7 @@ local options = {}
 local db 
 local factionTable = {}
 
-local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Anchor, Lego
+--local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Lego
 
 local default = {
 	profile = {
@@ -38,6 +38,8 @@ local default = {
 		ConnectedFrame = "LegoXparky",
 		xOffset = 0,
 		yOffset = 0,
+		MouseHide = false,
+		MouseTooltip = true,
 		Lego = true,
 		LegoToGo = false,
 		LegoDB = {
@@ -161,6 +163,20 @@ options.args.bars = {
 			type = "range",
 			min = 1.5, max = 8, step = 0.1,
 			arg = "Thickness"
+		},
+		hide = {
+			order = 8,
+			name = L["Hide Bars"],
+			desc = L["Hide the bars til you mouseover them"],
+			type = "toggle",
+			arg = "MouseHide",
+		},
+		tooltip = {
+			order = 9,
+			name = L["Show Tooltip"],
+			desc = L["Show a tooltip with the XP/Rep info when moused over"],
+			type = "toggle",
+			arg = "MouseTooltip",
 		},
 		colours = {
 			type = "group",
@@ -387,22 +403,6 @@ options.args.factions = {
 	}
 }
 
-function Xparky:OnInitialize()
-	Xparky.db = LibStub("AceDB-3.0"):New("XparkyDB", default, "profile")
-	db = Xparky.db.profile
-	reg:RegisterOptionsTable("Xparky", options)
-	self:RegisterChatCommand("xparky", function() dialog:Open("Xparky") end)
-	if db.Lego then
-		self:ShowLegoBlock()
-	end
-	Xparky:InitializeBars()
-	Xparky:ConnectBars()
-	Xparky:AttachBar()
-	Xparky:InitialiseEvents()
-	Xparky:getFactions()
-	self:ScheduleTimer("UpdateBars", 0.1, self)
-end
-
 local function SetColour(Bar, texture) 
 	local Setting = db.barColours[Bar.Name]
 	if Setting then
@@ -481,6 +481,63 @@ local function GenerateBar(BarName, Spark)
 	Bar.Spark1File =  "Interface\\AddOns\\Xparky\\Textures\\glow.tga"
 	Bar.Spark2File =  "Interface\\AddOns\\Xparky\\Textures\\glow2.tga"
 	return CreateBar(Bar, Spark)
+end
+
+local function MouseOver()
+	if db.MouseTooltip then
+		GameTooltip:SetOwner(Anchor, "ANCHOR_CURSOR")
+		Xparky:UpdateBars(nil, true)
+		GameTooltip:Show()
+	end
+	if db.MouseHide then
+		Xparky:ConnectBars()
+	end
+end
+
+local function HideBars()
+	XPBar:Hide()
+	RestBar:Hide()
+	NoXPBar:Hide()
+	RepBar:Hide()
+	NoRepBar:Hide()
+	Shadow:Hide()
+end
+
+
+local function MouseOut()
+	if db.MouseTooltip then
+		if GameTooltip:IsOwned(Anchor) then
+			GameTooltip:SetOwner(UIParent)
+			GameTooltip:Hide()
+		end
+	end
+	if db.MouseHide then
+		HideBars()
+	end
+end
+
+function Xparky:OnInitialize()
+	Xparky.db = LibStub("AceDB-3.0"):New("XparkyDB", default, "profile")
+	db = Xparky.db.profile
+	reg:RegisterOptionsTable("Xparky", options)
+	self:RegisterChatCommand("xparky", function() dialog:Open("Xparky") end)
+	if db.Lego then
+		self:ShowLegoBlock()
+	end
+	Xparky:InitializeBars()
+	Xparky:ConnectBars()
+	Xparky:AttachBar()
+	Xparky:InitialiseEvents()
+	Xparky:getFactions()
+	self:ScheduleTimer("UpdateBars", 0.1, self)
+	if db.MouseTooltip or db.MouseHide then 
+		Anchor:EnableMouse(true)
+	    Anchor:SetScript("OnEnter",MouseOver)
+		Anchor:SetScript("OnLeave",MouseOut) 
+		if db.MouseHide then
+			HideBars()
+		end
+	end
 end
 
 
@@ -568,7 +625,7 @@ function Xparky:ConnectBars()
 		RestBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
 
 		XPBar:ClearAllPoints()
-		XPBar:SetPoint(TabA, Base, SlotB)
+		XPBar:SetPoint(TabA, Base, Base == Anchor and TabA or SlotB)
 		XPBar:SetFrameLevel( NoXPBar:GetFrameLevel() + 1)
 		XPBar.Spark:ClearAllPoints()
 		XPBar.Spark:SetPoint(barEnd, XPBar, barEnd, x, y)
@@ -596,7 +653,7 @@ function Xparky:ConnectBars()
 		RepBar.Spark2:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
 
 		RepBar:ClearAllPoints()
-		RepBar:SetPoint(TabA, Base, SlotB )
+		RepBar:SetPoint(TabA, Base, Base == Anchor and TabA or SlotB )
 		RepBar.Spark:ClearAllPoints()
 		RepBar.Spark2:ClearAllPoints()
 		RepBar.Spark:SetPoint(barEnd, RepBar, barEnd, x, y)
@@ -613,7 +670,7 @@ function Xparky:ConnectBars()
 
 	if db.ShowShadow then
 		Shadow:ClearAllPoints()
-		Shadow:SetPoint(TabA, Base, SlotB)
+		Shadow:SetPoint(TabA, Base, Base == Anchor and TabA or SlotB)
 		Shadow.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
 		Shadow:Show()
 	end
@@ -679,10 +736,12 @@ end
 
 
 
-function Xparky:UpdateBars(dimensions)
+function Xparky:UpdateBars(dimensions, returnTooltip)
 	local total =  Width(Anchor:GetParent(), nil)
 	local currentXP, maxXP, restXP, remainXP, repName, repLevel, minRep, maxRep, currentRep
-	local xpString, repString
+	local xpString, repString, anchor
+
+	anchor = 0
 
 	if db.ShowXP then
 		currentXP = UnitXP("player")
@@ -701,17 +760,22 @@ function Xparky:UpdateBars(dimensions)
 		end
 		Width( NoXPBar, (remainXP/maxXP)*total + 0.001)
 
-		Width( XPBar.Spark, 128)
-		Width( XPBar.Spark2, 128)
+		Width( XPBar.Spark, Width(XPBar) < 20 and Width(XPBar) * 5 or 128)
+		Width( XPBar.Spark2, Width(XPBar) < 20 and Width(XPBar) * 5 or 128)
+
 		if db.LegoToGo then
 			xpString = getHex("NoXPBar")..maxXP-currentXP.. L["xp to go"]
 		else
 			xpString = getHex("XPBar") .. currentXP.."|r/"..getHex("NoXPBar") .. maxXP .. "|r - ["..string.format("%d%%", (currentXP/maxXP)*100).."] ("..string.format("%2d%%",((restXP)/maxXP)*100)..")"
 		end
+		anchor = db.Thickness
+
+		
 	end
 
 	if db.ShowRep then
 		repName, repLevel, minRep, maxRep, currentRep = GetWatchedFactionInfo()
+		if repName then
 			Width(RepBar, ((currentRep - minRep)/(maxRep-minRep))*total + 0.001)
 			Width(NoRepBar, ((maxRep - currentRep)/(maxRep - minRep))*total + 0.001)
 			if db.LegoToGo then
@@ -719,16 +783,32 @@ function Xparky:UpdateBars(dimensions)
 			else
 				repString = getHex("RepBar").. currentRep - minRep.."|r/"..getHex("NoRepBar") .. maxRep .."|r"
 			end
-			Width(RepBar.Spark, 128)
-			Width(RepBar.Spark2, 128)
+			Width(RepBar.Spark, Width(RepBar) < 20 and Width(RepBar) * 5 or  128)
+			Width(RepBar.Spark2, Width(RepBar) < 20 and Width(RepBar) * 5 or  128)
+			anchor = anchor + db.Thickness
+		end
 	end
 	
 	if db.ShowShadow then
 		Width(Shadow, total)
+		anchor = anchor + 5
 	end
 
+	Width(Anchor, total)
+	Height(Anchor, anchor)
+	
 	if db.Lego and Lego then
 		Lego:SetText((xpString or "") .. (xpString and "\n" or "")..(repString or ""))
+	end
+
+	if returnTooltip then
+		if xpString then
+	        GameTooltip:AddLine(xpString)
+	    end
+	    if repString then
+	    	GameTooltip:AddLine(repString)
+		end
+		return
 	end
 
 	if type(dimensions) == "string" then	
@@ -756,6 +836,21 @@ function Xparky:UpdateBars(dimensions)
 			self:ConnectBars()
 		elseif string.match(dimensions, "Offset") then
 			self:AttachBar()
+		elseif string.match(dimensions, "Mouse") then
+			if not db.MouseTooltip and not db.MouseHide then
+				Anchor:SetScript("OnEnter", nil)
+				Anchor:SetScript("OnLeave", nil)
+				Anchor:EnableMouse(false)
+			else
+				Anchor:SetScript("OnEnter", MouseOver)
+				Anchor:SetScript("OnLeave",MouseOut) 
+				Anchor:EnableMouse(true)
+			end	
+			if not db.MouseHide then
+				Xparky:ConnectBars()
+			else
+				HideBars()
+			end
 		elseif dimensions == "Attach" then
 			self:UpdateBars("Thickness")
 			self:AttachBar()
@@ -780,5 +875,6 @@ function Xparky:ShowLegoBlock()
 	Lego:Show()
 	if Anchor then self:AttachBar() end
 end
+
 
 
