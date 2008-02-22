@@ -48,6 +48,8 @@ if L then
 	L["Right"] = true
 	L["Inside Frame?"] = true
 	L["Attach to the inside of the frame"] = true
+	L["Bar Strata"] = true
+	L["Set the Bar Strata so it appears above or below other frames"] = true
 	L["X offset"] = true
 	L["How far on the X axis to offset the bars"] = true
 	L["Y offset"] = true

@@ -3,7 +3,7 @@
 --	Mouse frame selection shamelessly stolen from Dash (Kyhax)
 --]]
 
-Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
+local Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
 local reg = LibStub("AceConfigRegistry-3.0")
 local dialog = LibStub("AceConfigDialog-3.0")
@@ -12,7 +12,9 @@ local options = {}
 local db 
 local factionTable = {}
 
---local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Lego
+local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Anchor, Lego
+
+local Strata = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
 
 local default = {
 	profile = {
@@ -38,6 +40,7 @@ local default = {
 		ConnectedFrame = "LegoXparky",
 		xOffset = 0,
 		yOffset = 0,
+		Strata = 5,
 		MouseHide = false,
 		MouseTooltip = true,
 		Lego = true,
@@ -301,8 +304,11 @@ options.args.framelink = {
 		},
 		spacer = {
 			order = 6,
-			name = "",
-			type = "description"
+			name = L["Bar Strata"],
+			desc = L["Set the Bar Strata so it appears above or below other frames"],
+			type = "select",
+			values = Strata,
+			arg = "Strata"
 		},
 		xoffset = {
 			order = 7,
@@ -485,7 +491,6 @@ local function CreateBar(Bar, Spark)
 	SetColour(Bar, tex)
 	Bar:ClearAllPoints()
 	Width(Bar, 100)
-	Bar:SetFrameStrata("DIALOG")
 	return Bar
 end
 
@@ -529,6 +534,15 @@ local function MouseOut()
 	if db.MouseHide then
 		HideBars()
 	end
+end
+
+local function SetStrata()
+	XPBar:SetFrameStrata(Strata[db.Strata])
+	NoXPBar:SetFrameStrata(Strata[db.Strata])
+	RestBar:SetFrameStrata(Strata[db.Strata])
+	RepBar:SetFrameStrata(Strata[db.Strata])
+	NoRepBar:SetFrameStrata(Strata[db.Strata])
+	Shadow:SetFrameStrata(Strata[db.Strata])
 end
 
 function Xparky:OnInitialize()
@@ -689,6 +703,7 @@ function Xparky:ConnectBars()
 		Shadow.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
 		Shadow:Show()
 	end
+	SetStrata()
 end
 do
 
@@ -879,6 +894,8 @@ function Xparky:UpdateBars(dimensions, returnTooltip)
 			elseif Lego and Lego:IsVisible() then
 				Lego:Hide()
 			end
+		elseif dimensions == "Strata" then
+			SetStrata()
 		end
 	end
 end
@@ -887,7 +904,7 @@ function Xparky:ShowLegoBlock()
 	if not Lego then
 		Lego = LibStub("LegoBlock-Beta1"):New("Xparky")
 		Lego:SetDB(db.LegoDB)
-		Lego:SetScript("OnClick", function() db.LegoToGo = not db.LegoToGo; self:AttachBar(); self:AttachBar() end)
+		Lego:SetScript("OnClick", function() db.LegoToGo = not db.LegoToGo; self:AttachBar(); self:AttachBar() reg:NotifyChange("Xparky") end)
 	end
 	Lego:Show()
 	if Anchor then self:AttachBar() end
