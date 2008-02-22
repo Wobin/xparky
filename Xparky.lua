@@ -397,6 +397,9 @@ function Xparky:getFactions()
 			factionTable[factionIndex] = name
 		end
 	end
+	if GetNumFactions() == 0 then
+		self:ScheduleTimer("getFactions", 1)
+	end
 end
 
 options.args.factions = {
@@ -863,6 +866,8 @@ function Xparky:UpdateBars(dimensions, returnTooltip)
 			else
 				HideBars()
 			end
+		elseif string.match(dimensions,"ToGo") then
+			self:AttachBar()
 		elseif dimensions == "Attach" then
 			self:UpdateBars("Thickness")
 			self:AttachBar()
