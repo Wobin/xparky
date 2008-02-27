@@ -904,7 +904,24 @@ function Xparky:ShowLegoBlock()
 	if not Lego then
 		Lego = LibStub("LegoBlock-Beta1"):New("Xparky")
 		Lego:SetDB(db.LegoDB)
-		Lego:SetScript("OnClick", function() db.LegoToGo = not db.LegoToGo; self:AttachBar(); self:AttachBar() reg:NotifyChange("Xparky") end)
+		Lego:SetScript("OnClick", 
+								function() 
+									if IsShiftKeyDown() then
+										local report = ""
+										local st, sp = string.find(Lego.text:GetText(), "\n", 0, true)
+										if GetMouseButtonClicked() == "LEFT" then
+											report = string.sub(Lego.text:GetText(), 0, st - 1)
+										else
+											report = string.sub(Lego.text:GetText(), sp + 1)
+										end
+										DEFAULT_CHAT_FRAME.editBox:SetText(report)
+										return
+									end
+									db.LegoToGo = not db.LegoToGo; 
+									self:AttachBar(); 
+									self:AttachBar() 
+									reg:NotifyChange("Xparky") 
+								end)
 	end
 	Lego:Show()
 	if Anchor then self:AttachBar() end
