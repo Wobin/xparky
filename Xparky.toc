@@ -12,5 +12,6 @@ embeds.xml
 Locale\en_US.lua
 Locale\ko_KR.lua
 Locale\zh_CN.lua
+Locale\zh_TW.lua
 LegoBlock.lua
 Xparky.lua
