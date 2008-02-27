@@ -1,4 +1,4 @@
-﻿local L = LibStub("AceLocale-3.0"):NewLocale("Xparky", "koKR", true)
+﻿local L = LibStub("AceLocale-3.0"):NewLocale("Xparky", "koKR")
 
 if L then
 	L["This frame has no global name, and cannot be added via the mouse"] = true
