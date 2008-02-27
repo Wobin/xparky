@@ -763,15 +763,31 @@ end
 
 function Xparky:InitialiseEvents()
 	self:RegisterEvent("PLAYER_XP_UPDATE", "UpdateBars")
+	self:RegisterEvent("PLAYER_REGEN_DISABLED","DisableUpdate")
+	self:RegisterEvent("PLAYER_REGEN_ENABLED", "EnableUpdate")
 	self:RegisterBucketEvent("UPDATE_EXHAUSTION", 60, "UpdateBars")
 	self:RegisterBucketEvent("UPDATE_FACTION", 5, "UpdateBars")
 	hooksecurefunc("SetWatchedFactionIndex", Xparky.RescanFactions)
-	
+	if InCombatLockdown() then
+		Xparky.UpdateMe = false
+	else
+		Xparky.UpdateMe = true
+	end
 end
 
 
+function Xparky:DisableUpdate()
+	Xparky.UpdateMe = false
+end
+
+function Xparky:EnableUpdate()
+	Xparky.UpdateMe = true
+end
 
 function Xparky:UpdateBars(dimensions, returnTooltip)
+	
+	if not Xparky.UpdateMe then return end
+
 	local total =  Width(Anchor:GetParent(), nil)
 	local currentXP, maxXP, restXP, remainXP, repName, repLevel, minRep, maxRep, currentRep
 	local xpString, repString, anchor
