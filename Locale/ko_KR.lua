@@ -34,7 +34,7 @@ if L then
 	L["Show a tooltip with the XP/Rep info when moused over"] = "바에 마우스를 올리면 경험치/평판에 관한 툴팁을 표시합니다."
 
 	L["Attachment Method"] = "접근 방법"
-	L["Frame Link"] = "프레임 링크"
+	L["Frame Link"] = "프레임 선택"
 	L["Hook to frame"] = "프레임 선택기"
 	L["Click here to activate the frame selector"] = "마우스로 클릭하여 프레임 선택기를 활성화 합니다."
 	L["Frame Connected to"] = "프레임 선택"
@@ -73,10 +73,10 @@ if L then
 	L["List of Factions to watch"] = "평판바에 표시할 평판을 선택합니다."
 
 	L[" xp to go"] = " (다음 레벨까지 경험치)"
-	L[" rep to go - "] = "다음 관계까지의 평판치 - "
+	L[" rep to go - "] = "다음 까지의 평판치 - "
 
-	L["Documentation"] = "문서"
+	L["Documentation"] = "애드온 설명"
 	L["Description"] = "설명"
-	L["About"] = "대하여"
-	L["FAQ"] = "빠른 질문/답변"
+	L["About"] = "애드온에 대하여"
+	L["FAQ"] = "요약 도움말"
 end
