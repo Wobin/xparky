@@ -419,7 +419,7 @@ options.args.factions = {
 			type = "select",
 			values = factionTable,
 			arg = "Faction",
-			set = function(k, v) db.Faction = tonumber(v); SetWatchedFactionIndex(tonumber(v)); end 
+			set = function(k, v) db.Faction = tonumber(v); SetWatchedFactionIndex(tonumber(v)); Xparky:ScheduleTimer("UpdateBars", 1); end 
 		}
 	}
 }
@@ -507,7 +507,9 @@ local function MouseOver()
 	if db.MouseTooltip then
 		GameTooltip:SetOwner(Anchor, "ANCHOR_CURSOR")
 		Xparky:UpdateBars(nil, true)
-		GameTooltip:Show()
+		if GetMouseFocus() == Anchor then
+			GameTooltip:Show()
+		end
 	end
 	if db.MouseHide then
 		Xparky:ConnectBars()
@@ -559,14 +561,17 @@ function Xparky:OnInitialize()
 	Xparky:InitialiseEvents()
 	Xparky:getFactions()
 	self:ScheduleTimer("UpdateBars", 0.1, self)
+	Anchor:EnableMouse(true)
+	
 	if db.MouseTooltip or db.MouseHide then 
-		Anchor:EnableMouse(true)
 	    Anchor:SetScript("OnEnter",MouseOver)
 		Anchor:SetScript("OnLeave",MouseOut) 
 		if db.MouseHide then
 			HideBars()
 		end
 	end
+
+
 end
 
 
@@ -904,17 +909,18 @@ function Xparky:ShowLegoBlock()
 	if not Lego then
 		Lego = LibStub("LegoBlock-Beta1"):New("Xparky")
 		Lego:SetDB(db.LegoDB)
+		Lego:RegisterForClicks("LeftButtonUp","RightButtonUp")
 		Lego:SetScript("OnClick", 
 								function() 
 									if IsShiftKeyDown() then
 										local report = ""
 										local st, sp = string.find(Lego.text:GetText(), "\n", 0, true)
-										if GetMouseButtonClicked() == "LEFT" then
-											report = string.sub(Lego.text:GetText(), 0, st - 1)
+										if GetMouseButtonClicked() == "LeftButton" then
+											report = string.gsub(string.sub(Lego.text:GetText(), 0, st - 1), "|r|c%x%x%x%x%x%x%x%x", "")
 										else
-											report = string.sub(Lego.text:GetText(), sp + 1)
+											report = string.gsub(string.sub(Lego.text:GetText(), sp + 1), "|r|c%x%x%x%x%x%x%x%x", "")
 										end
-										DEFAULT_CHAT_FRAME.editBox:SetText(report)
+										DEFAULT_CHAT_FRAME.editBox:SetText(string.gsub(report, "|r", ""))
 										return
 									end
 									db.LegoToGo = not db.LegoToGo; 
