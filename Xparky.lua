@@ -815,7 +815,7 @@ function Xparky:UpdateBars(dimensions, returnTooltip)
 		Width( XPBar.Spark2, Width(XPBar) < 20 and Width(XPBar) * 5 or 128)
 
 		if db.LegoToGo then
-			xpString = getHex("NoXPBar")..maxXP-currentXP.. L["xp to go"]
+			xpString = getHex("NoXPBar")..maxXP-currentXP.. L[" xp to go"]
 		else
 			xpString = getHex("XPBar") .. currentXP.."|r/"..getHex("NoXPBar") .. maxXP .. "|r - ["..string.format("%d%%", (currentXP/maxXP)*100).."] ("..string.format("%2d%%",((restXP)/maxXP)*100)..")"
 		end

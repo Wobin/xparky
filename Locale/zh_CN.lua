@@ -72,7 +72,7 @@ if L then
 	L["Faction Selected"] = "阵营选择"
 	L["List of Factions to watch"] = "选择你想监视的阵营声望。"
 
-	L["xp to go"] = "尚需经验"
+	L[" xp to go"] = "尚需经验"
 	L[" rep to go - "] = "尚需声望 - "
 
 	L["Documentation"] = "说明"

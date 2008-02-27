@@ -72,7 +72,7 @@ if L then
 	L["Faction Selected"] = true
 	L["List of Factions to watch"] = true
 
-	L["xp to go"] = true
+	L[" xp to go"] = true
 	L[" rep to go - "] = true
 
 	L["Documentation"] = true
