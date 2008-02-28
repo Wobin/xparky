@@ -52,6 +52,35 @@ local default = {
 			showIcon = false,
 			scale = 1,
 			group = nil
+		},
+		Bars = {
+			BarNames = { "XparkyXPBar", "XparkyRepBar" },
+			XparkyXPBar = {
+				Type = "XP",
+				Colours = {
+					XPBar = { Red = 0, Green = 0.4, Blue = 0.9, Alpha = 1 },
+					NoXPBar = { Red = 0.3, Green = 0.3, Blue = 0.3, Alpha = 1 },
+					RestBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
+				},
+				ConnectedFrame = "LegoXparky",
+				Attach = "bottom",
+				Direction = "forward",
+				Thickness = 2,
+				Spark = 1,
+			},
+			XparkyRepBar = {
+				Type = "Rep",
+				Colours = {
+					RepBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
+					NoRepBar = { Red = 0, Green = 0.3, Blue = 1, Alpha = 1 },
+				},
+				ConnectedFrame = "XparkyXPBar",
+				Attach = "bottom",
+				Direction = "forward",
+				Thickness = 2,
+				Spark = 1,
+				Faction = 2,
+			}
 		}
 	}
 }
@@ -932,9 +961,9 @@ function Xparky:ShowLegoBlock()
 										local report = ""
 										local st, sp = string.find(Lego.text:GetText(), "\n", 0, true)
 										if GetMouseButtonClicked() == "LeftButton" then
-											report = string.gsub(string.sub(Lego.text:GetText(), 0, st - 1), "|r|c%x%x%x%x%x%x%x%x", "")
+											report = string.gsub(string.sub(Lego.text:GetText(), 0, st - 1), "|c%x%x%x%x%x%x%x%x", "")
 										else
-											report = string.gsub(string.sub(Lego.text:GetText(), sp + 1), "|r|c%x%x%x%x%x%x%x%x", "")
+											report = string.gsub(string.sub(Lego.text:GetText(), sp + 1), "|c%x%x%x%x%x%x%x%x", "")
 										end
 										DEFAULT_CHAT_FRAME.editBox:SetText(string.gsub(report, "|r", ""))
 										return
