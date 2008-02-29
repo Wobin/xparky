@@ -15,3 +15,5 @@ Locale\zh_CN.lua
 Locale\zh_TW.lua
 LegoBlock.lua
 Xparky.lua
+Options.lua
+Bar.lua
