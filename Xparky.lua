@@ -3,18 +3,17 @@
 --	Mouse frame selection shamelessly stolen from Dash (Kyhax)
 --]]
 
-local Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
+Xparky = LibStub("AceAddon-3.0"):NewAddon("Xparky", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceBucket-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
 local reg = LibStub("AceConfigRegistry-3.0")
 local dialog = LibStub("AceConfigDialog-3.0")
 local _G = getfenv(0)
-local options = {}
-local db 
+Xparky.options = {}
+local options = Xparky.options  
 local factionTable = {}
 
 local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Anchor, Lego
 
-local Strata = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
 
 local default = {
 	profile = {
@@ -84,6 +83,9 @@ local default = {
 		}
 	}
 }
+
+Xparky.db = LibStub("AceDB-3.0"):New("XparkyDB", default, "profile")
+local db  = Xparky.db.profile
 
 local mouser = CreateFrame("Frame")
 mouser.tooltip = _G.GameTooltip
@@ -168,84 +170,9 @@ function Xparky:getFactions()
 end
 
 
-local function SetColour(Bar, texture) 
-	local Setting = db.barColours[Bar.Name]
-	if Setting then
-		texture:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
-		if Bar.Spark then
-			Bar.Spark:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
-			Bar.Spark2:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
-		end
-	end
-end
 
-local function Width(Bar, Size)
-	if db.Attach == "top" or db.Attach == "bottom" then
-		if not Size then
-			return Bar:GetWidth()
-		end
-		Bar:SetWidth(Size)
-	else
-		if not Size then 
-			return Bar:GetHeight()
-		end
-		Bar:SetHeight(Size)
-	end
-end
 
-local function Height(Bar, Size)
-	if db.Attach == "top" or db.Attach == "bottom" then
-		if not Size then
-			return Bar:GetHeight()
-		end
-		Bar:SetHeight(Size)
-	else
-		if not Size then
-			return Bar:GetWidth()
-		end
-		Bar:SetWidth(Size)
-	end
-end
 
-local function CreateBar(Bar, Spark)
-	local tex = Bar:CreateTexture(Bar.Name .. "Texture", "OVERLAY")
-	tex:SetTexture(Bar.TextureFile)
-	tex:ClearAllPoints()
-	tex:SetAllPoints(Bar)
-	tex:Show()
-	Bar.Texture = tex
-	Height(Bar, db.Thickness)
-	if Spark then
-		local spark = Bar:CreateTexture(Bar.Name .. "Spark", "OVERLAY")
-		spark:SetTexture(Bar.Spark1File)
-		Height(spark, db.Thickness * 5)
-		spark:SetBlendMode("ADD")
-		spark:SetParent(Bar)
-		spark:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
-		Bar.Spark = spark
-
-		local spark2 = Bar:CreateTexture(Bar.Name .. "Spark2", "OVERLAY")
-		spark2:SetTexture(Bar.Spark2File)
-		Height(spark2, db.Thickness * 5)
-		spark2:SetBlendMode("ADD")
-		spark2:SetParent(Bar)
-		spark2:SetAlpha(Bar.Name == "XPBar" and db.Spark or db.Spark2)
-		Bar.Spark2 = spark2
-	end
-	SetColour(Bar, tex)
-	Bar:ClearAllPoints()
-	Width(Bar, 100)
-	return Bar
-end
-
-local function GenerateBar(BarName, Spark)
-	local Bar = CreateFrame("Frame", BarName .. "Xparky", Anchor)
-	Bar.Name = BarName
-	Bar.TextureFile = "Interface\\AddOns\\Xparky\\Textures\\texture.tga"
-	Bar.Spark1File =  "Interface\\AddOns\\Xparky\\Textures\\glow.tga"
-	Bar.Spark2File =  "Interface\\AddOns\\Xparky\\Textures\\glow2.tga"
-	return CreateBar(Bar, Spark)
-end
 
 local function MouseOver()
 	if db.MouseTooltip then
@@ -282,30 +209,18 @@ local function MouseOut()
 	end
 end
 
-local function SetStrata()
-	XPBar:SetFrameStrata(Strata[db.Strata])
-	NoXPBar:SetFrameStrata(Strata[db.Strata])
-	RestBar:SetFrameStrata(Strata[db.Strata])
-	RepBar:SetFrameStrata(Strata[db.Strata])
-	NoRepBar:SetFrameStrata(Strata[db.Strata])
-	Shadow:SetFrameStrata(Strata[db.Strata])
-end
-
 function Xparky:OnInitialize()
-	Xparky.db = LibStub("AceDB-3.0"):New("XparkyDB", default, "profile")
-	db = Xparky.db.profile
+	--db = Xparky.db.profile
 	reg:RegisterOptionsTable("Xparky", options)
 	self:RegisterChatCommand("xparky", function() dialog:Open("Xparky") end)
 	if db.Lego then
 		self:ShowLegoBlock()
 	end
-	Xparky:InitializeBars()
-	Xparky:ConnectBars()
-	Xparky:AttachBar()
-	Xparky:InitialiseEvents()
+	--XparkyBar:New{Name="Frog", Type="XP"}
+
 	Xparky:getFactions()
-	self:ScheduleTimer("UpdateBars", 0.1, self)
-	Anchor:EnableMouse(true)
+	--self:ScheduleTimer("UpdateBars", 0.1, self)
+	--Anchor:EnableMouse(true)
 	
 	if db.MouseTooltip or db.MouseHide then 
 	    Anchor:SetScript("OnEnter",MouseOver)
@@ -319,22 +234,7 @@ function Xparky:OnInitialize()
 end
 
 
-function Xparky:InitializeBars()
-	Anchor = CreateFrame("Frame", "XparkyXPAnchor", Lego or UIParent)
-	Anchor:SetWidth(1)
-	Anchor:SetHeight(1)
-	Anchor:Show()
-	XPBar = GenerateBar("XPBar", true)
-	NoXPBar = GenerateBar("NoXPBar")
-	RepBar = GenerateBar("RepBar", true)
-	NoRepBar = GenerateBar("NoRepBar")
-	RestBar = GenerateBar("RestBar")
-	Shadow = GenerateBar("XPShadow")
-	Shadow.Texture:SetTexture("Interface\\AddOns\\Xparky\\Textures\\border.tga")
-	Shadow.Texture:SetVertexColor(0, 0, 0, 1)
-	Shadow.Texture:SetHeight(5)
-end
-
+	
 function Xparky:ConnectBars()
 	local Base = Anchor
 	local TabA, SlotB, TabC, SlotD

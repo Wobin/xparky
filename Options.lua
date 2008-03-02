@@ -1,4 +1,8 @@
 local options = Xparky.options
+local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
+local db = Xparky.db
+local Strata = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
+
 Xparky.factionTable = {}
 
 options.type = "group"
