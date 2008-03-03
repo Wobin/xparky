@@ -11,7 +11,7 @@ local Bar = XparkyBar
 BaseBar = {
 				Attach = "bottom",
 				Direction = "forward",
-				Thickness = 80,
+				Thickness = 5,
 				Spark = 1,
 				TextureFile = "Interface\\AddOns\\Xparky\\Textures\\texture.tga",
 				Spark1File =  "Interface\\AddOns\\Xparky\\Textures\\glow.tga",
@@ -27,7 +27,19 @@ function BaseBar:new(o)
 		o.Anchor:SetWidth(1)
 		o.Anchor:SetHeight(1)
 		o.Anchor:Show()
-		o:CreateTextures()
+		if o.Type then
+			o.Anchor:EnableMouse(true)
+			o.Anchor:RegisterForDrag("LeftButton")
+			o.Anchor:SetMovable(true)
+			o.Anchor:SetScript("OnDragStart", function(self)
+				self:StartMoving()
+			end)
+			o.Anchor:SetScript("OnDragStop", function(self)
+				self:StopMovingOrSizing()
+			end)
+		else
+			o:CreateTextures()
+		end
 	end 
 	return o
 end
@@ -38,11 +50,19 @@ function BaseBar:Width(Size)
 			return self.Anchor:GetWidth()
 		end
 		self.Anchor:SetWidth(Size)
+		if self.SparkBase then
+			self.SparkBase:SetWidth(128)
+			self.SparkOverlay:SetWidth(128)
+		end
 	else
 		if not Size then 
 			return self.Anchor:GetHeight()
 		end
 		self.Anchor:SetHeight(Size)
+		if self.SparkBase then
+			self.SparkBase:SetHeight(128)
+			self.SparkOverlay:SetHeight(128)
+		end
 	end
 end
 
@@ -72,14 +92,25 @@ function BaseBar:SetStrata()
 	self.Anchor:SetFrameStrata(Strata[self.Strata])
 end
 
+function BaseBar:Rotate(deg)
+	local angle = math.rad(deg)
+	local cos, sin = math.cos(angle), math.sin(angle)
+
+	self.Texture:SetTexCoord((sin - cos), -(cos + sin), -cos, -sin, sin, -cos, 0, 0)
+	if self.SparkBase then
+		self.SparkBase:SetTexCoord((sin - cos), -(cos + sin), -cos, -sin, sin, -cos, 0, 0)
+		self.SparkOverlay:SetTexCoord((sin - cos), -(cos + sin), -cos, -sin, sin, -cos, 0, 0)
+	end
+end
+
 function BaseBar:CreateTextures()
-	local tex = self.Anchor:CreateTexture(self.Name .. "Texture", "OVERLAY")
+	local tex = self.Anchor:CreateTexture(self.Name .. "Texture", "ARTWORK")
 	tex:SetTexture(self.TextureFile)
 	tex:ClearAllPoints()
 	tex:SetAllPoints(self.Anchor)
 	tex:Show()
 	self.Texture = tex
-	if self.Type then -- if we have a type, it'll have a spark
+	if self.HasSpark then -- if we have a type, it'll have a spark
 		local sparkBase = self.Anchor:CreateTexture(self.Name .. "Spark", "OVERLAY")
 		sparkBase:SetTexture(self.Spark1File)
 		sparkBase:SetBlendMode("ADD")
@@ -95,8 +126,8 @@ function BaseBar:CreateTextures()
 		self.SparkOverlay = sparkOverlay
 
 	end
-	self:Height(self.Thickness)
 	self.Anchor:ClearAllPoints()
+	self:Height(self.Thickness)
 	self:Width(100)
 	return self.Anchor
 end
@@ -106,7 +137,6 @@ function BaseBar:SetColour(index)
 	if Setting then
 		self.Texture:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
 		if self.SparkBase then
-			Xparky:Print("Recolouring Spark")
 			self.SparkBase:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
 			self.SparkOverlay:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
 		end
@@ -124,12 +154,15 @@ XPBar = BaseBar:new{
 				},
 				ConnectedFrame = "LegoXparky",
 				BarOrder = { [1] = "XPBar", [2] = "RestBar", [3] = "NoXPBar" },
+				BarWidth = 900,
 			}
 
 function XPBar:new(o)
-	-- XPBar
+	-- Bar
 	o = BaseBar:new(o)
 	setmetatable(o, self)
+	local x = BaseBar:new{Name = "XP"..o.Name, HasSpark = true}
+	setmetatable(x, self)
 	-- RestBar
 	local r = BaseBar:new{Name = "Rest"..o.Name}
 	setmetatable(r, self)
@@ -139,8 +172,32 @@ function XPBar:new(o)
 	
 	self.__index = self
 
-	o.Sections = {[1] = o, [2] = r, [3] = n}
+	o:Height(self.Thickness)
+	o:Width(300)
+	
+	o.Sections = {[1] = x, [2] = r, [3] = n}
 	return o
+end
+
+function XPBar:Update()
+	local BarWidth
+	local Attached = getglobal(self.Attached) or self.Attached
+	if not Attached or Attached:GetName() == UIParent then
+		BarWidth = self.BarWidth
+	else
+		BarWidth = Attached:GetWidth()
+	end
+	local Rest, CurrXP, MaxXP = GetXPExhaustion(), UnitXP("player"), UnitXPMax("player")
+	local Percent = (BarWidth/MaxXP)
+
+	self.Sections[1]:Width(Percent * CurrXP)
+	self.Sections[3]:Width(Percent * MaxXP-CurrXP)
+	if Rest > (MaxXP - CurrXP) then
+		self.Sections[2]:Width(Percent * (Rest - MaxXP - CurrXP))
+	else
+		self.Sections[2]:Width(Percent * Rest)
+	end
+
 end
 
 --[[ RepBar Functions ]] --
@@ -153,7 +210,8 @@ RepBar = BaseBar:new{
 				},
 				ConnectedFrame = "XparkyXPBar",
 				BarOrder = { [1] = "RepBar", [2] = "NoRepBar" },
-				Faction = 2,
+				Faction = 3,
+				BarWidth = 300,
 			}
 
 
@@ -161,30 +219,55 @@ RepBar = BaseBar:new{
 function RepBar:new(o)
 	o = BaseBar:new(o)
 	setmetatable(o, self)
+	local r = BaseBar:new{Name = "Rep"..o.Name, HasSpark = true}
+	setmetatable(r, self)
 	local n = BaseBar:new{Name = "NoRep"..o.Name}
 	setmetatable(n, self)
 
 	self.__index = self
-	o.Sections = {[1] = o, [2] = n}
+	o.Sections = {[1] = r, [2] = n}
+	
+	o:Height(self.Thickness)
+	o:Width(200)
 	return o
+end
+
+function RepBar:Update()
+	local BarWidth
+	local Attached = getglobal(self.Attached) or self.Attached
+	if not Attached or Attached:GetName() == UIParent then
+		BarWidth = self.BarWidth
+	else
+		BarWidth = Attached:GetWidth()
+	end
+	local name, description, standingID, bottomValue, topValue, earnedValue = GetFactionInfo(self.Faction) 
+	local Percent = BarWidth/(topValue - bottomValue)
+
+	self.Sections[1]:Width(Percent * (earnedValue - bottomValue))
+	self.Sections[2]:Width(Percent * (topValue - earnedValue))
+
 end
 
 --[[ Generic Bar Functions ]] -- 
 
 XparkyBar = {}
 
-function XparkyBar:ConstructBar(BarInfo)
-	local Attached = BarInfo.Anchor
-	for i, Bar in ipairs(BarInfo.Sections) do
-		if not MyBar then MyBar = Bar end
+function XparkyBar:ConstructBar(Bars)
+	local Attached = nil
+	if not MyBar or MyBar then MyBar = Bars end
+	for i, Bar in ipairs(Bars.Sections) do
 		Bar:SetColour(i)
-		if Bar.Anchor ~= Attached then
+		if not Attached then
+			Bar.Anchor:ClearAllPoints()
+			Bar.Anchor:SetPoint("LEFT", Bars.Anchor, "LEFT")
+		else
 			Bar.Anchor:ClearAllPoints()
 			Bar.Anchor:SetPoint("LEFT", Attached, "RIGHT")
-			Bar.Anchor:Show()
 		end
+		Bar.Anchor:Show()
+		Bar.Anchor:SetParent(Bars.Anchor)
+		
 		if Bar.SparkBase then
-			Xparky:Print("Repointing spark")
 			Bar.SparkBase:ClearAllPoints()
 			Bar.SparkOverlay:ClearAllPoints()
 			Bar.SparkBase:SetPoint("RIGHT", Bar.Anchor, "RIGHT", 10, 0)

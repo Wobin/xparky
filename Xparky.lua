@@ -216,7 +216,8 @@ function Xparky:OnInitialize()
 	if db.Lego then
 		self:ShowLegoBlock()
 	end
-	--XparkyBar:New{Name="Frog", Type="XP"}
+	XparkyBar:New{Name="Frog", Type="XP"}
+	XparkyBar:New{Name="Womble", Type="Rep"}
 
 	Xparky:getFactions()
 	--self:ScheduleTimer("UpdateBars", 0.1, self)
