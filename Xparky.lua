@@ -84,6 +84,8 @@ local default = {
 	}
 }
 
+
+
 Xparky.db = LibStub("AceDB-3.0"):New("XparkyDB", default, "profile")
 local db  = Xparky.db.profile
 
