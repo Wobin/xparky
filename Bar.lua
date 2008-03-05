@@ -210,7 +210,7 @@ RepBar = BaseBar:new{
 				},
 				ConnectedFrame = "XparkyXPBar",
 				BarOrder = { [1] = "RepBar", [2] = "NoRepBar" },
-				Faction = 3,
+				Faction = 2,
 				BarWidth = 300,
 			}
 
@@ -252,26 +252,88 @@ end
 
 XparkyBar = {}
 
-function XparkyBar:ConstructBar(Bars)
+function BaseBar:ConstructBar()
 	local Attached = nil
-	if not MyBar or MyBar then MyBar = Bars end
-	for i, Bar in ipairs(Bars.Sections) do
+
+	if not self.Sections then return end
+	
+	if not MyBar then MyBar = Bars end
+	
+	local TabA, SlotB, TabC, SlotD
+	
+	local tlx, tly, trx, try, blx, bly, brx, bry,stlx, stly, strx, stry, sblx, sbly, sbrx, sbry
+	Xparky:Print(self.Attach)
+	if (self.Attach == "bottom" and not self.Inside) or (self.Attach == "top" and self.Inside) then
+		TabA = "LEFT"
+		SlotB = "RIGHT"
+		tlx, tly, trx, try, blx, bly, brx, bry = 1, 0, 1, 1, 0, 0, 0, 1
+		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 1, 0, 0, 1, 1, 1, 0
+	end
+	
+	if (self.Attach == "top" and not self.Inside) or (self.Attach == "bottom" and self.Inside) then
+		TabA = "BOTTOM"
+		SlotB = "TOP"
+		tlx, tly, trx, try, blx, bly, brx, bry = 0, 1, 0, 0, 1, 1, 1, 0
+		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 1, 0, 0, 1, 1, 1, 0
+	end
+
+	if (self.Attach == "left" and not self.Inside) or (self.Attach == "right" and self.Inside) then
+		TabA = "TOPRIGHT"
+		SlotB = "TOPLEFT"
+		tlx, tly, trx, try, blx, bly, brx, bry = 1, 1, 0, 1, 1, 0, 0, 0
+		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 0, 1, 0, 0, 1, 1, 1
+	end
+
+	if (self.Attach == "right" and not self.Inside) or (self.Attach == "left" and self.Inside) then
+		TabA = "TOPLEFT"
+		SlotB = "TOPRIGHT"
+		tlx, tly, trx, try, blx, bly, brx, bry = 0, 0, 1, 0, 0, 1, 1, 1
+		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 0, 1, 0, 0, 1, 1, 1
+	end
+
+	if self.Attach == "bottom" or self.Attach == "top" then
+		TabC = "LEFT"
+		SlotD = "RIGHT"
+	end
+
+	if self.Attach == "left" or self.Attach == "right" then
+		TabC = "TOP"
+		SlotD = "BOTTOM"
+	end
+
+	local barEnd, x, y = "", 0, 0
+	if self.Attach == "top" or self.Attach == "bottom" then
+		barEnd = "RIGHT"
+		x = 10
+		y = 0
+	end
+
+	if self.Attach == "left" or self.Attach == "right" then
+		barEnd = "BOTTOM"
+		x = 0
+		y = -10
+	end
+
+	Xparky:Print(TabA )
+	Xparky:Print(SlotB)
+
+	for i, Bar in ipairs(self.Sections) do
 		Bar:SetColour(i)
 		if not Attached then
 			Bar.Anchor:ClearAllPoints()
-			Bar.Anchor:SetPoint("LEFT", Bars.Anchor, "LEFT")
+			Bar.Anchor:SetPoint(TabC, self.Anchor, SlotD)
 		else
 			Bar.Anchor:ClearAllPoints()
-			Bar.Anchor:SetPoint("LEFT", Attached, "RIGHT")
+			Bar.Anchor:SetPoint(TabC, Attached, SlotD)
 		end
 		Bar.Anchor:Show()
-		Bar.Anchor:SetParent(Bars.Anchor)
+		Bar.Anchor:SetParent(self.Anchor)
 		
 		if Bar.SparkBase then
 			Bar.SparkBase:ClearAllPoints()
 			Bar.SparkOverlay:ClearAllPoints()
-			Bar.SparkBase:SetPoint("RIGHT", Bar.Anchor, "RIGHT", 10, 0)
-			Bar.SparkOverlay:SetPoint("RIGHT", Bar.Anchor, "RIGHT", 10, 0)
+			Bar.SparkBase:SetPoint(barEnd, Bar.Anchor, barEnd, x, y)
+			Bar.SparkOverlay:SetPoint(barEnd, Bar.Anchor, barEnd, x, y)
 		end
 		Attached = Bar.Anchor
 	end
@@ -283,7 +345,8 @@ function XparkyBar:New(Bar)
 	else
 		Bar = RepBar:new(Bar)
 	end
-	self:ConstructBar(Bar)
+	Bar:ConstructBar()
+	Bar:Update()
 	Bar.Anchor:ClearAllPoints()
 	Bar.Anchor:SetPoint("CENTER", UIParent)
 	return Bar
