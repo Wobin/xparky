@@ -259,72 +259,68 @@ function BaseBar:ConstructBar()
 	
 	if not MyBar then MyBar = Bars end
 	
-	local TabA, SlotB, TabC, SlotD
+	local FrameAnchorFrom, FrameAnchorTo
+	local BarAnchorFrom, BarAnchorTo, x, y
 	
 	local tlx, tly, trx, try, blx, bly, brx, bry,stlx, stly, strx, stry, sblx, sbly, sbrx, sbry
-	Xparky:Print(self.Attach)
-	if (self.Attach == "bottom" and not self.Inside) or (self.Attach == "top" and self.Inside) then
-		TabA = "LEFT"
-		SlotB = "RIGHT"
-		tlx, tly, trx, try, blx, bly, brx, bry = 1, 0, 1, 1, 0, 0, 0, 1
-		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 1, 0, 0, 1, 1, 1, 0
+	
+	if (self.Attach == "bottom") then
+		FrameAnchorFrom = "TOPLEFT"
+		FrameAnchorTo = "BOTTOMLEFT"
+	end
+
+	if (self.Attach == "top" ) then
+		FrameAnchorFrom = "BOTTOMLEFT"
+		FrameAnchorTo = "TOPLEFT"
+	end
+	if (self.Attach == "left" ) then
+		FrameAnchorFrom = "TOPRIGHT"
+		FrameAnchorTo = "TOPLEFT"
+	end
+
+	if (self.Attach == "right" ) then
+		FrameAnchorFrom = "TOPLEFT"
+		FrameAnchorTo = "TOPRIGHT"
 	end
 	
-	if (self.Attach == "top" and not self.Inside) or (self.Attach == "bottom" and self.Inside) then
-		TabA = "BOTTOM"
-		SlotB = "TOP"
-		tlx, tly, trx, try, blx, bly, brx, bry = 0, 1, 0, 0, 1, 1, 1, 0
-		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 1, 0, 0, 1, 1, 1, 0
-	end
-
-	if (self.Attach == "left" and not self.Inside) or (self.Attach == "right" and self.Inside) then
-		TabA = "TOPRIGHT"
-		SlotB = "TOPLEFT"
-		tlx, tly, trx, try, blx, bly, brx, bry = 1, 1, 0, 1, 1, 0, 0, 0
-		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 0, 1, 0, 0, 1, 1, 1
-	end
-
-	if (self.Attach == "right" and not self.Inside) or (self.Attach == "left" and self.Inside) then
-		TabA = "TOPLEFT"
-		SlotB = "TOPRIGHT"
-		tlx, tly, trx, try, blx, bly, brx, bry = 0, 0, 1, 0, 0, 1, 1, 1
-		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 0, 1, 0, 0, 1, 1, 1
-	end
-
-	if self.Attach == "bottom" or self.Attach == "top" then
-		TabC = "LEFT"
-		SlotD = "RIGHT"
-	end
-
-	if self.Attach == "left" or self.Attach == "right" then
-		TabC = "TOP"
-		SlotD = "BOTTOM"
-	end
-
-	local barEnd, x, y = "", 0, 0
-	if self.Attach == "top" or self.Attach == "bottom" then
-		barEnd = "RIGHT"
+	if self.Rotate == 0  then
 		x = 10
 		y = 0
+		BarAnchorFrom = "LEFT"
+		BarAnchorTo = "RIGHT"
 	end
 
-	if self.Attach == "left" or self.Attach == "right" then
-		barEnd = "BOTTOM"
+	if self.Rotate == 90  then
+		x = 0
+		y = 10
+		BarAnchorFrom = "TOP"
+		BarAnchorTo = "BOTTOM"
+	end
+
+	if self.Rotate == 180  then
 		x = 0
 		y = -10
+		BarAnchorFrom = "RIGHT"
+		BarAnchorTo = "LEFT"
 	end
 
-	Xparky:Print(TabA )
-	Xparky:Print(SlotB)
+	if self.Rotate == 270  then
+		x = -10
+		y = 0
+		BarAnchorFrom = "BOTTOM"
+		BarAnchorTo = "TOP"
+	end
 
 	for i, Bar in ipairs(self.Sections) do
 		Bar:SetColour(i)
+		
+		Bar.Anchor:Rotate
 		if not Attached then
 			Bar.Anchor:ClearAllPoints()
-			Bar.Anchor:SetPoint(TabC, self.Anchor, SlotD)
+			Bar.Anchor:SetPoint(BarAnchorFrom, self.Anchor, BarAnchorTo)
 		else
 			Bar.Anchor:ClearAllPoints()
-			Bar.Anchor:SetPoint(TabC, Attached, SlotD)
+			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorTo)
 		end
 		Bar.Anchor:Show()
 		Bar.Anchor:SetParent(self.Anchor)
@@ -332,8 +328,8 @@ function BaseBar:ConstructBar()
 		if Bar.SparkBase then
 			Bar.SparkBase:ClearAllPoints()
 			Bar.SparkOverlay:ClearAllPoints()
-			Bar.SparkBase:SetPoint(barEnd, Bar.Anchor, barEnd, x, y)
-			Bar.SparkOverlay:SetPoint(barEnd, Bar.Anchor, barEnd, x, y)
+			Bar.SparkBase:SetPoint(BarAnchorTo, Bar.Anchor, BarAnchorTo, x, y)
+			Bar.SparkOverlay:SetPoint(BarAnchorTo, Bar.Anchor, BarAnchorTo, x, y)
 		end
 		Attached = Bar.Anchor
 	end
