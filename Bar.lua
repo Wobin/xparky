@@ -9,9 +9,8 @@ local Bar = XparkyBar
 --[[ Base Bar functions ]] --
 
 BaseBar = {
-				Attach = "bottom",
 				Direction = "forward",
-				Thickness = 5,
+				Thickness = 25,
 				Spark = 1,
 				TextureFile = "Interface\\AddOns\\Xparky\\Textures\\texture.tga",
 				Spark1File =  "Interface\\AddOns\\Xparky\\Textures\\glow.tga",
@@ -45,7 +44,7 @@ function BaseBar:new(o)
 end
 
 function BaseBar:Width(Size)
-	if self.Attach == "top" or self.Attach == "bottom" then
+	if self.Attach == "top" or self.Attach == "bottom" or self.Rotate == 0 or self.Rotate == 180 then
 		if not Size then
 			return self.Anchor:GetWidth()
 		end
@@ -67,7 +66,7 @@ function BaseBar:Width(Size)
 end
 
 function BaseBar:Height(Size)
-	if self.Attach == "top" or self.Attach == "bottom" then
+	if self.Attach == "top" or self.Attach == "bottom" or self.Rotate == 0 or self.Rotate == 180 then
 		if not Size then
 			return self.Anchor:GetHeight()
 		end
@@ -92,15 +91,27 @@ function BaseBar:SetStrata()
 	self.Anchor:SetFrameStrata(Strata[self.Strata])
 end
 
-function BaseBar:Rotate(deg)
+function BaseBar:RotateBar(deg, texture)
+	if deg == 0 then return end
+
+	if not texture and self.SparkBase then
+		Xparky:Print("rotating sparks")
+		self.SparkBase:SetTexture(self.Spark1File)
+		self:RotateBar(deg, self.SparkBase)
+		self.SparkBase:SetTexture(self.SparkOverlay)
+		self:RotateBar(deg, self.SparkOverlay)
+	end
+	
+	if not texture then 
+		texture = self.Texture 
+		self.Texture:SetTexture(self.TextureFile)
+	end 
+	
 	local angle = math.rad(deg)
 	local cos, sin = math.cos(angle), math.sin(angle)
-
-	self.Texture:SetTexCoord((sin - cos), -(cos + sin), -cos, -sin, sin, -cos, 0, 0)
-	if self.SparkBase then
-		self.SparkBase:SetTexCoord((sin - cos), -(cos + sin), -cos, -sin, sin, -cos, 0, 0)
-		self.SparkOverlay:SetTexCoord((sin - cos), -(cos + sin), -cos, -sin, sin, -cos, 0, 0)
-	end
+	
+	Xparky:Print("Rotating texture: " .. texture:GetTexture())
+	texture:SetTexCoord((sin - cos), -(cos + sin), -cos, -sin, sin, -cos, 0, 0)
 end
 
 function BaseBar:CreateTextures()
@@ -143,6 +154,88 @@ function BaseBar:SetColour(index)
 	end
 end
 
+function BaseBar:ConstructBar()
+	local Attached = nil
+
+	if not self.Sections then return end
+	
+	if not MyBar then MyBar = Bars end
+	
+	local FrameAnchorFrom, FrameAnchorTo
+	local BarAnchorFrom, BarAnchorTo, x, y
+	
+	local tlx, tly, trx, try, blx, bly, brx, bry,stlx, stly, strx, stry, sblx, sbly, sbrx, sbry
+	
+	if (self.Attach == "bottom") then
+		FrameAnchorFrom = "TOPLEFT"
+		FrameAnchorTo = "BOTTOMLEFT"
+	end
+
+	if (self.Attach == "top" ) then
+		FrameAnchorFrom = "BOTTOMLEFT"
+		FrameAnchorTo = "TOPLEFT"
+	end
+	if (self.Attach == "left" ) then
+		FrameAnchorFrom = "TOPRIGHT"
+		FrameAnchorTo = "TOPLEFT"
+	end
+
+	if (self.Attach == "right" ) then
+		FrameAnchorFrom = "TOPLEFT"
+		FrameAnchorTo = "TOPRIGHT"
+	end
+	
+	if self.Rotate == 0  then
+		x = 10
+		y = 0
+		BarAnchorFrom = "LEFT"
+		BarAnchorTo = "RIGHT"
+	end
+
+	if self.Rotate == 90  then
+		x = 0
+		y = -10
+		BarAnchorFrom = "TOP"
+		BarAnchorTo = "BOTTOM"
+	end
+
+	if self.Rotate == 180  then
+		x = -10
+		y = 0
+		BarAnchorFrom = "RIGHT"
+		BarAnchorTo = "LEFT"
+	end
+
+	if self.Rotate == 270  then
+		x = 0
+		y = 10
+		BarAnchorFrom = "BOTTOM"
+		BarAnchorTo = "TOP"
+	end
+
+	for i, Bar in ipairs(self.Sections) do
+		Bar:SetColour(i)
+		
+		Bar:RotateBar(self.Rotate)
+		if not Attached then
+			Bar.Anchor:ClearAllPoints()
+			Bar.Anchor:SetPoint(BarAnchorFrom, self.Anchor, BarAnchorTo)
+		else
+			Bar.Anchor:ClearAllPoints()
+			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorTo)
+		end
+		Bar.Anchor:Show()
+		Bar.Anchor:SetParent(self.Anchor)
+		
+		if Bar.SparkBase then
+			Bar.SparkBase:ClearAllPoints()
+			Bar.SparkOverlay:ClearAllPoints()
+			Bar.SparkBase:SetPoint(BarAnchorTo, Bar.Anchor, BarAnchorTo, x, y)
+			Bar.SparkOverlay:SetPoint(BarAnchorTo, Bar.Anchor, BarAnchorTo, x, y)
+		end
+		Attached = Bar.Anchor
+	end
+end
 --[[ XP Bar Functions ]]--
 
 XPBar = BaseBar:new{
@@ -153,6 +246,7 @@ XPBar = BaseBar:new{
 					RestBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
 				},
 				ConnectedFrame = "LegoXparky",
+				Rotate = 0,
 				BarOrder = { [1] = "XPBar", [2] = "RestBar", [3] = "NoXPBar" },
 				BarWidth = 900,
 			}
@@ -187,8 +281,10 @@ function XPBar:Update()
 	else
 		BarWidth = Attached:GetWidth()
 	end
-	local Rest, CurrXP, MaxXP = GetXPExhaustion(), UnitXP("player"), UnitXPMax("player")
+	local Rest, CurrXP, MaxXP = GetXPExhaustion() or 0, UnitXP("player") or 1, UnitXPMax("player") or 1
 	local Percent = (BarWidth/MaxXP)
+
+	Xparky:Print(Rest.. " " .. CurrXP .. " " .. MaxXP)
 
 	self.Sections[1]:Width(Percent * CurrXP)
 	self.Sections[3]:Width(Percent * MaxXP-CurrXP)
@@ -211,6 +307,7 @@ RepBar = BaseBar:new{
 				ConnectedFrame = "XparkyXPBar",
 				BarOrder = { [1] = "RepBar", [2] = "NoRepBar" },
 				Faction = 2,
+				Rotate = 90,
 				BarWidth = 300,
 			}
 
@@ -252,88 +349,6 @@ end
 
 XparkyBar = {}
 
-function BaseBar:ConstructBar()
-	local Attached = nil
-
-	if not self.Sections then return end
-	
-	if not MyBar then MyBar = Bars end
-	
-	local FrameAnchorFrom, FrameAnchorTo
-	local BarAnchorFrom, BarAnchorTo, x, y
-	
-	local tlx, tly, trx, try, blx, bly, brx, bry,stlx, stly, strx, stry, sblx, sbly, sbrx, sbry
-	
-	if (self.Attach == "bottom") then
-		FrameAnchorFrom = "TOPLEFT"
-		FrameAnchorTo = "BOTTOMLEFT"
-	end
-
-	if (self.Attach == "top" ) then
-		FrameAnchorFrom = "BOTTOMLEFT"
-		FrameAnchorTo = "TOPLEFT"
-	end
-	if (self.Attach == "left" ) then
-		FrameAnchorFrom = "TOPRIGHT"
-		FrameAnchorTo = "TOPLEFT"
-	end
-
-	if (self.Attach == "right" ) then
-		FrameAnchorFrom = "TOPLEFT"
-		FrameAnchorTo = "TOPRIGHT"
-	end
-	
-	if self.Rotate == 0  then
-		x = 10
-		y = 0
-		BarAnchorFrom = "LEFT"
-		BarAnchorTo = "RIGHT"
-	end
-
-	if self.Rotate == 90  then
-		x = 0
-		y = 10
-		BarAnchorFrom = "TOP"
-		BarAnchorTo = "BOTTOM"
-	end
-
-	if self.Rotate == 180  then
-		x = 0
-		y = -10
-		BarAnchorFrom = "RIGHT"
-		BarAnchorTo = "LEFT"
-	end
-
-	if self.Rotate == 270  then
-		x = -10
-		y = 0
-		BarAnchorFrom = "BOTTOM"
-		BarAnchorTo = "TOP"
-	end
-
-	for i, Bar in ipairs(self.Sections) do
-		Bar:SetColour(i)
-		
-		Bar.Anchor:Rotate
-		if not Attached then
-			Bar.Anchor:ClearAllPoints()
-			Bar.Anchor:SetPoint(BarAnchorFrom, self.Anchor, BarAnchorTo)
-		else
-			Bar.Anchor:ClearAllPoints()
-			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorTo)
-		end
-		Bar.Anchor:Show()
-		Bar.Anchor:SetParent(self.Anchor)
-		
-		if Bar.SparkBase then
-			Bar.SparkBase:ClearAllPoints()
-			Bar.SparkOverlay:ClearAllPoints()
-			Bar.SparkBase:SetPoint(BarAnchorTo, Bar.Anchor, BarAnchorTo, x, y)
-			Bar.SparkOverlay:SetPoint(BarAnchorTo, Bar.Anchor, BarAnchorTo, x, y)
-		end
-		Attached = Bar.Anchor
-	end
-end
 
 function XparkyBar:New(Bar)
 	if Bar.Type == "XP" then

@@ -216,147 +216,26 @@ function Xparky:OnInitialize()
 	reg:RegisterOptionsTable("Xparky", options)
 	self:RegisterChatCommand("xparky", function() dialog:Open("Xparky") end)
 	if db.Lego then
-		self:ShowLegoBlock()
+	--	self:ShowLegoBlock()
 	end
-	XparkyBar:New{Name="Frog", Type="XP"}
-	XparkyBar:New{Name="Womble", Type="Rep"}
+--	Frog = XparkyBar:New{Name="Frog", Type="XP"}
+	Womble = XparkyBar:New{Name="Womble", Type="Rep"}
 
 	Xparky:getFactions()
 	--self:ScheduleTimer("UpdateBars", 0.1, self)
 	--Anchor:EnableMouse(true)
 	
-	if db.MouseTooltip or db.MouseHide then 
+--[[	if db.MouseTooltip or db.MouseHide then 
 	    Anchor:SetScript("OnEnter",MouseOver)
 		Anchor:SetScript("OnLeave",MouseOut) 
 		if db.MouseHide then
 			HideBars()
 		end
-	end
+	end --]]
 
 
 end
-
-
 	
-function Xparky:ConnectBars()
-	local Base = Anchor
-	local TabA, SlotB, TabC, SlotD
-	local tlx, tly, trx, try, blx, bly, brx, bry,stlx, stly, strx, stry, sblx, sbly, sbrx, sbry
-
-	if (db.Attach == "bottom" and not db.Inside) or (db.Attach == "top" and db.Inside) then
-		TabA = "TOPLEFT"
-		SlotB = "BOTTOMLEFT"
-		tlx, tly, trx, try, blx, bly, brx, bry = 1, 0, 1, 1, 0, 0, 0, 1
-		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 1, 0, 0, 1, 1, 1, 0
-	end
-	
-	if (db.Attach == "top" and not db.Inside) or (db.Attach == "bottom" and db.Inside) then
-		TabA = "BOTTOMLEFT"
-		SlotB = "TOPLEFT"
-		tlx, tly, trx, try, blx, bly, brx, bry = 0, 1, 0, 0, 1, 1, 1, 0
-		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 1, 0, 0, 1, 1, 1, 0
-	end
-
-	if (db.Attach == "left" and not db.Inside) or (db.Attach == "right" and db.Inside) then
-		TabA = "TOPRIGHT"
-		SlotB = "TOPLEFT"
-		tlx, tly, trx, try, blx, bly, brx, bry = 1, 1, 0, 1, 1, 0, 0, 0
-		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 0, 1, 0, 0, 1, 1, 1
-	end
-
-	if (db.Attach == "right" and not db.Inside) or (db.Attach == "left" and db.Inside) then
-		TabA = "TOPLEFT"
-		SlotB = "TOPRIGHT"
-		tlx, tly, trx, try, blx, bly, brx, bry = 0, 0, 1, 0, 0, 1, 1, 1
-		stlx, stly, strx, stry, sblx, sbly, sbrx, sbry = 0, 0, 1, 0, 0, 1, 1, 1
-	end
-
-	if db.Attach == "bottom" or db.Attach == "top" then
-		TabC = "LEFT"
-		SlotD = "RIGHT"
-	end
-
-	if db.Attach == "left" or db.Attach == "right" then
-		TabC = "TOP"
-		SlotD = "BOTTOM"
-	end
-
-	local barEnd, x, y = "", 0, 0
-	if db.Attach == "top" or db.Attach == "bottom" then
-		barEnd = "RIGHT"
-		x = 10
-		y = 0
-	end
-
-	if db.Attach == "left" or db.Attach == "right" then
-		barEnd = "BOTTOM"
-		x = 0
-		y = -10
-	end
-
-	XPBar:Hide()
-	RestBar:Hide()
-	NoXPBar:Hide()
-
-	if db.ShowXP then
-		XPBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-		XPBar.Spark:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
-		XPBar.Spark2:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
-		NoXPBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-		RestBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-
-		XPBar:ClearAllPoints()
-		XPBar:SetPoint(TabA, Base, Base == Anchor and TabA or SlotB)
-		XPBar:SetFrameLevel( NoXPBar:GetFrameLevel() + 1)
-		XPBar.Spark:ClearAllPoints()
-		XPBar.Spark:SetPoint(barEnd, XPBar, barEnd, x, y)
-		XPBar.Spark:SetParent(XPBar)
-		XPBar.Spark2:ClearAllPoints()
-		XPBar.Spark2:SetPoint(barEnd, XPBar, barEnd, x, y)
-		XPBar.Spark2:SetParent(XPBar)
-		RestBar:ClearAllPoints()
-		RestBar:SetPoint(TabC, XPBar, SlotD)
-		NoXPBar:ClearAllPoints()
-		NoXPBar:SetPoint(TabC, RestBar, SlotD)
-		XPBar:Show()
-		RestBar:Show()
-		NoXPBar:Show()
-		Base = XPBar
-	end 
-	
-	RepBar:Hide()
-	NoRepBar:Hide()
-	
-	if db.ShowRep then
-		RepBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-		NoRepBar.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-		RepBar.Spark:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
-		RepBar.Spark2:SetTexCoord(stlx, stly, strx, stry, sblx, sbly, sbrx, sbry)
-
-		RepBar:ClearAllPoints()
-		RepBar:SetPoint(TabA, Base, Base == Anchor and TabA or SlotB )
-		RepBar.Spark:ClearAllPoints()
-		RepBar.Spark2:ClearAllPoints()
-		RepBar.Spark:SetPoint(barEnd, RepBar, barEnd, x, y)
-		RepBar.Spark2:SetPoint(barEnd, RepBar, barEnd, x, y)
-		NoRepBar:ClearAllPoints()
-		NoRepBar:SetPoint(TabC, RepBar, SlotD)
-		RepBar:SetFrameLevel( NoRepBar:GetFrameLevel() + 1)
-		RepBar:Show()
-		NoRepBar:Show() 
-		Base = RepBar
-	end
-	
-	Shadow:Hide()
-
-	if db.ShowShadow then
-		Shadow:ClearAllPoints()
-		Shadow:SetPoint(TabA, Base, Base == Anchor and TabA or SlotB)
-		Shadow.Texture:SetTexCoord(tlx, tly, trx, try, blx, bly, brx, bry)
-		Shadow:Show()
-	end
-	SetStrata()
-end
 do
 
 	local timeout = 0
