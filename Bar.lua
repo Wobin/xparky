@@ -1,6 +1,7 @@
 local defaultBar = {}
 
 local Strata = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
+local angles = {[180] = { 1,0,1,1,0,0,0,1}, [0] = {0,1,0,0,1,1,1,0}, [270] = {1,1,0,1,1,0,0,0}, [90] = {0,0,1,0,0,1,1,1}}
 
 XparkyBar = {}
 
@@ -10,7 +11,7 @@ local Bar = XparkyBar
 
 BaseBar = {
 				Direction = "forward",
-				Thickness = 25,
+				Thickness = 8,
 				Spark = 1,
 				TextureFile = "Interface\\AddOns\\Xparky\\Textures\\texture.tga",
 				Spark1File =  "Interface\\AddOns\\Xparky\\Textures\\glow.tga",
@@ -24,7 +25,7 @@ function BaseBar:new(o)
 	if o.Name then
 		o.Anchor = CreateFrame("Frame", o.Name .. "Xparky", UIParent)
 		o.Anchor:SetWidth(1)
-		o.Anchor:SetHeight(1)
+		o.Anchor:SetHeight(self.Thickness)
 		o.Anchor:Show()
 		if o.Type then
 			o.Anchor:EnableMouse(true)
@@ -44,23 +45,24 @@ function BaseBar:new(o)
 end
 
 function BaseBar:Width(Size)
+	Xparky:Print(self.Name..":"..(self.Rotate or "-1"))
 	if self.Attach == "top" or self.Attach == "bottom" or self.Rotate == 0 or self.Rotate == 180 then
 		if not Size then
 			return self.Anchor:GetWidth()
 		end
 		self.Anchor:SetWidth(Size)
 		if self.SparkBase then
-			self.SparkBase:SetWidth(128)
-			self.SparkOverlay:SetWidth(128)
-		end
+			self.SparkBase:SetWidth(Size * 4)
+			self.SparkOverlay:SetWidth(Size * 4)
+		end 
 	else
 		if not Size then 
 			return self.Anchor:GetHeight()
 		end
 		self.Anchor:SetHeight(Size)
 		if self.SparkBase then
-			self.SparkBase:SetHeight(128)
-			self.SparkOverlay:SetHeight(128)
+			self.SparkBase:SetHeight(Size * 4)
+			self.SparkOverlay:SetHeight(Size * 4)
 		end
 	end
 end
@@ -72,8 +74,8 @@ function BaseBar:Height(Size)
 		end
 		self.Anchor:SetHeight(Size)
 		if self.SparkBase then
-			self.SparkBase:SetHeight(Size * 5)
-			self.SparkOverlay:SetHeight(Size * 5)
+			self.SparkBase:SetHeight(Size * 10)
+			self.SparkOverlay:SetHeight(Size * 10)
 		end
 	else
 		if not Size then
@@ -81,8 +83,8 @@ function BaseBar:Height(Size)
 		end
 		self.Anchor:SetWidth(Size)
 		if self.SparkBase then
-			self.SparkBase:SetWidth(Size * 5)
-			self.SparkOverlay:SetWidth(Size * 5)
+			self.SparkBase:SetWidth(Size * 10)
+			self.SparkOverlay:SetWidth(Size * 10)
 		end
 	end
 end
@@ -92,10 +94,8 @@ function BaseBar:SetStrata()
 end
 
 function BaseBar:RotateBar(deg, texture)
-	if deg == 0 then return end
 
 	if not texture and self.SparkBase then
-		Xparky:Print("rotating sparks")
 		self.SparkBase:SetTexture(self.Spark1File)
 		self:RotateBar(deg, self.SparkBase)
 		self.SparkBase:SetTexture(self.SparkOverlay)
@@ -106,12 +106,8 @@ function BaseBar:RotateBar(deg, texture)
 		texture = self.Texture 
 		self.Texture:SetTexture(self.TextureFile)
 	end 
-	
-	local angle = math.rad(deg)
-	local cos, sin = math.cos(angle), math.sin(angle)
-	
-	Xparky:Print("Rotating texture: " .. texture:GetTexture())
-	texture:SetTexCoord((sin - cos), -(cos + sin), -cos, -sin, sin, -cos, 0, 0)
+	local coords = angles[deg]
+	texture:SetTexCoord(coords[1], coords[2], coords[3], coords[4], coords[5], coords[6], coords[7], coords[8] )
 end
 
 function BaseBar:CreateTextures()
@@ -138,8 +134,6 @@ function BaseBar:CreateTextures()
 
 	end
 	self.Anchor:ClearAllPoints()
-	self:Height(self.Thickness)
-	self:Width(100)
 	return self.Anchor
 end
 
@@ -154,17 +148,25 @@ function BaseBar:SetColour(index)
 	end
 end
 
+local function GetXY(Width, Rotate)
+	if Rotate == 0 then
+		return 0.3 * Width, 0
+	elseif Rotate == 90 then
+		return 0, -(0.3 * Width)
+	elseif Rotate == 180 then
+		return -(0.3 * Width), 0
+	elseif Rotate == 270 then
+		return 0, 0.3 * Width
+	end
+end
+
 function BaseBar:ConstructBar()
 	local Attached = nil
 
 	if not self.Sections then return end
 	
-	if not MyBar then MyBar = Bars end
-	
 	local FrameAnchorFrom, FrameAnchorTo
 	local BarAnchorFrom, BarAnchorTo, x, y
-	
-	local tlx, tly, trx, try, blx, bly, brx, bry,stlx, stly, strx, stry, sblx, sbly, sbrx, sbry
 	
 	if (self.Attach == "bottom") then
 		FrameAnchorFrom = "TOPLEFT"
@@ -186,32 +188,26 @@ function BaseBar:ConstructBar()
 	end
 	
 	if self.Rotate == 0  then
-		x = 10
-		y = 0
 		BarAnchorFrom = "LEFT"
 		BarAnchorTo = "RIGHT"
 	end
 
 	if self.Rotate == 90  then
-		x = 0
-		y = -10
 		BarAnchorFrom = "TOP"
 		BarAnchorTo = "BOTTOM"
 	end
 
 	if self.Rotate == 180  then
-		x = -10
-		y = 0
 		BarAnchorFrom = "RIGHT"
 		BarAnchorTo = "LEFT"
 	end
 
 	if self.Rotate == 270  then
-		x = 0
-		y = 10
 		BarAnchorFrom = "BOTTOM"
 		BarAnchorTo = "TOP"
 	end
+	
+	self:Update()
 
 	for i, Bar in ipairs(self.Sections) do
 		Bar:SetColour(i)
@@ -219,7 +215,7 @@ function BaseBar:ConstructBar()
 		Bar:RotateBar(self.Rotate)
 		if not Attached then
 			Bar.Anchor:ClearAllPoints()
-			Bar.Anchor:SetPoint(BarAnchorFrom, self.Anchor, BarAnchorTo)
+			Bar.Anchor:SetPoint(BarAnchorFrom, self.Anchor, BarAnchorFrom)
 		else
 			Bar.Anchor:ClearAllPoints()
 			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorTo)
@@ -228,6 +224,7 @@ function BaseBar:ConstructBar()
 		Bar.Anchor:SetParent(self.Anchor)
 		
 		if Bar.SparkBase then
+			local x,y = GetXY(Bar:Width(), self.Rotate)	
 			Bar.SparkBase:ClearAllPoints()
 			Bar.SparkOverlay:ClearAllPoints()
 			Bar.SparkBase:SetPoint(BarAnchorTo, Bar.Anchor, BarAnchorTo, x, y)
@@ -255,20 +252,17 @@ function XPBar:new(o)
 	-- Bar
 	o = BaseBar:new(o)
 	setmetatable(o, self)
-	local x = BaseBar:new{Name = "XP"..o.Name, HasSpark = true}
+	local x = BaseBar:new{Name = "XP"..o.Name, HasSpark = true, Rotate = o.Rotate}
 	setmetatable(x, self)
 	-- RestBar
-	local r = BaseBar:new{Name = "Rest"..o.Name}
+	local r = BaseBar:new{Name = "Rest"..o.Name, Rotate = o.Rotate}
 	setmetatable(r, self)
 	-- NoXP
-	local n = BaseBar:new{Name = "NoXP"..o.Name}
+	local n = BaseBar:new{Name = "NoXP"..o.Name, Rotate = o.Rotate}
 	setmetatable(n, self)
 	
 	self.__index = self
 
-	o:Height(self.Thickness)
-	o:Width(300)
-	
 	o.Sections = {[1] = x, [2] = r, [3] = n}
 	return o
 end
@@ -281,17 +275,23 @@ function XPBar:Update()
 	else
 		BarWidth = Attached:GetWidth()
 	end
-	local Rest, CurrXP, MaxXP = GetXPExhaustion() or 0, UnitXP("player") or 1, UnitXPMax("player") or 1
+	local Rest, CurrXP, MaxXP = GetXPExhaustion() or 0, UnitXP("player") or 0, UnitXPMax("player") or 0
 	local Percent = (BarWidth/MaxXP)
 
-	Xparky:Print(Rest.. " " .. CurrXP .. " " .. MaxXP)
-
+	self.Sections[1]:Height(self.Thickness)
+	self.Sections[2]:Height(self.Thickness)
+	self.Sections[3]:Height(self.Thickness)
+	
+	self:Width(BarWidth)
+	self:Height(self.Thickness)
+	
 	self.Sections[1]:Width(Percent * CurrXP)
-	self.Sections[3]:Width(Percent * MaxXP-CurrXP)
 	if Rest > (MaxXP - CurrXP) then
-		self.Sections[2]:Width(Percent * (Rest - MaxXP - CurrXP))
+		self.Sections[2]:Width(Percent * (MaxXP - CurrXP))
+		self.Sections[3]:Width(0)
 	else
 		self.Sections[2]:Width(Percent * Rest)
+		self.Sections[3]:Width(Percent * MaxXP-CurrXP)
 	end
 
 end
@@ -306,8 +306,8 @@ RepBar = BaseBar:new{
 				},
 				ConnectedFrame = "XparkyXPBar",
 				BarOrder = { [1] = "RepBar", [2] = "NoRepBar" },
-				Faction = 2,
-				Rotate = 90,
+				Faction = 6,
+				Rotate = 0,
 				BarWidth = 300,
 			}
 
@@ -316,16 +316,13 @@ RepBar = BaseBar:new{
 function RepBar:new(o)
 	o = BaseBar:new(o)
 	setmetatable(o, self)
-	local r = BaseBar:new{Name = "Rep"..o.Name, HasSpark = true}
+	local r = BaseBar:new{Name = "Rep"..o.Name, HasSpark = true, Rotate = o.Rotate, Faction = o.Faction}
 	setmetatable(r, self)
-	local n = BaseBar:new{Name = "NoRep"..o.Name}
+	local n = BaseBar:new{Name = "NoRep"..o.Name, Rotate = o.Rotate, Faction = o.Faction}
 	setmetatable(n, self)
 
 	self.__index = self
 	o.Sections = {[1] = r, [2] = n}
-	
-	o:Height(self.Thickness)
-	o:Width(200)
 	return o
 end
 
@@ -337,9 +334,14 @@ function RepBar:Update()
 	else
 		BarWidth = Attached:GetWidth()
 	end
+	
+	self.Sections[1]:Height(self.Thickness)
+	self.Sections[2]:Height(self.Thickness)
+	self:Width(BarWidth)
+	self:Height(self.Thickness)
+	
 	local name, description, standingID, bottomValue, topValue, earnedValue = GetFactionInfo(self.Faction) 
 	local Percent = BarWidth/(topValue - bottomValue)
-
 	self.Sections[1]:Width(Percent * (earnedValue - bottomValue))
 	self.Sections[2]:Width(Percent * (topValue - earnedValue))
 
@@ -357,7 +359,6 @@ function XparkyBar:New(Bar)
 		Bar = RepBar:new(Bar)
 	end
 	Bar:ConstructBar()
-	Bar:Update()
 	Bar.Anchor:ClearAllPoints()
 	Bar.Anchor:SetPoint("CENTER", UIParent)
 	return Bar

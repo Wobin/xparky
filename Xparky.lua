@@ -218,8 +218,10 @@ function Xparky:OnInitialize()
 	if db.Lego then
 	--	self:ShowLegoBlock()
 	end
---	Frog = XparkyBar:New{Name="Frog", Type="XP"}
-	Womble = XparkyBar:New{Name="Womble", Type="Rep"}
+	Frog = XparkyBar:New{Name="Frog", Type="XP", Rotate = 0}
+	Womble = XparkyBar:New{Name="Womble", Type="Rep", Faction=6, Rotate = 90}
+	Cabbage = XparkyBar:New{Name="Cabbage", Type="Rep", Faction=2, Rotate =	270}
+	Bing = XparkyBar:New{Name="Bing", Type="Rep", Faction=4, Rotate = 180}
 
 	Xparky:getFactions()
 	--self:ScheduleTimer("UpdateBars", 0.1, self)
