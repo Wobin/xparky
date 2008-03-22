@@ -45,15 +45,14 @@ function BaseBar:new(o)
 end
 
 function BaseBar:Width(Size)
-	Xparky:Print(self.Name..":"..(self.Rotate or "-1"))
-	if self.Attach == "top" or self.Attach == "bottom" or self.Rotate == 0 or self.Rotate == 180 then
+	if self.Rotate == 0 or self.Rotate == 180 then
 		if not Size then
 			return self.Anchor:GetWidth()
 		end
 		self.Anchor:SetWidth(Size)
 		if self.SparkBase then
-			self.SparkBase:SetWidth(Size * 4)
-			self.SparkOverlay:SetWidth(Size * 4)
+			self.SparkBase:SetWidth(Size)
+			self.SparkOverlay:SetWidth(Size)
 		end 
 	else
 		if not Size then 
@@ -61,14 +60,14 @@ function BaseBar:Width(Size)
 		end
 		self.Anchor:SetHeight(Size)
 		if self.SparkBase then
-			self.SparkBase:SetHeight(Size * 4)
-			self.SparkOverlay:SetHeight(Size * 4)
+			self.SparkBase:SetHeight(Size)
+			self.SparkOverlay:SetHeight(Size)
 		end
 	end
 end
 
 function BaseBar:Height(Size)
-	if self.Attach == "top" or self.Attach == "bottom" or self.Rotate == 0 or self.Rotate == 180 then
+	if self.Rotate == 0 or self.Rotate == 180 then
 		if not Size then
 			return self.Anchor:GetHeight()
 		end
@@ -150,13 +149,13 @@ end
 
 local function GetXY(Width, Rotate)
 	if Rotate == 0 then
-		return 0.3 * Width, 0
+		return 0.08 * Width , 0
 	elseif Rotate == 90 then
-		return 0, -(0.3 * Width)
+		return 0, -(0.08 * Width)
 	elseif Rotate == 180 then
-		return -(0.3 * Width), 0
+		return -(0.08 * Width), 0
 	elseif Rotate == 270 then
-		return 0, 0.3 * Width
+		return 0, 0.08 * Width
 	end
 end
 
@@ -291,7 +290,7 @@ function XPBar:Update()
 		self.Sections[3]:Width(0)
 	else
 		self.Sections[2]:Width(Percent * Rest)
-		self.Sections[3]:Width(Percent * MaxXP-CurrXP)
+		self.Sections[3]:Width(Percent * (MaxXP-CurrXP))
 	end
 
 end
