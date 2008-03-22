@@ -10,8 +10,6 @@ local dialog = LibStub("AceConfigDialog-3.0")
 local _G = getfenv(0)
 Xparky.options = {}
 local options = Xparky.options  
-local factionTable = {}
-
 local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Anchor, Lego
 
 
@@ -56,14 +54,6 @@ local default = {
 			BarNames = { "XparkyXPBar", "XparkyRepBar" },
 			XparkyXPBar = {
 				Type = "XP",
-				Colours = {
-					XPBar = { Red = 0, Green = 0.4, Blue = 0.9, Alpha = 1 },
-					NoXPBar = { Red = 0.3, Green = 0.3, Blue = 0.3, Alpha = 1 },
-					RestBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
-				},
-				ConnectedFrame = "LegoXparky",
-				Attach = "bottom",
-				Direction = "forward",
 				Thickness = 2,
 				Spark = 1,
 			},
@@ -73,9 +63,6 @@ local default = {
 					RepBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
 					NoRepBar = { Red = 0, Green = 0.3, Blue = 1, Alpha = 1 },
 				},
-				ConnectedFrame = "XparkyXPBar",
-				Attach = "bottom",
-				Direction = "forward",
 				Thickness = 2,
 				Spark = 1,
 				Faction = 2,
@@ -152,24 +139,7 @@ function Xparky:RescanFactions()
 	Xparky:ScheduleTimer("getFactions", 0.1, Xparky)
 end
 
-function Xparky:getFactions()
-	local WatchedFaction = GetWatchedFactionInfo()
-	for factionIndex = 1, GetNumFactions() do
-		local name, _, _, _, _, _, _, _,isHeader, _, isWatched = GetFactionInfo(factionIndex)
-		if not isHeader then
-			if WatchedFaction == name then
-				if db.Faction ~= factionIndex then
-					db.Faction = factionIndex;
-					self:UpdateBars()
-				end
-			end
-			factionTable[factionIndex] = name
-		end
-	end
-	if GetNumFactions() == 0 then
-		self:ScheduleTimer("getFactions", 1)
-	end
-end
+
 
 
 
@@ -219,9 +189,6 @@ function Xparky:OnInitialize()
 	--	self:ShowLegoBlock()
 	end
 	Frog = XparkyBar:New{Name="Frog", Type="XP", Rotate = 0}
-	Womble = XparkyBar:New{Name="Womble", Type="Rep", Faction=6, Rotate = 90}
-	Cabbage = XparkyBar:New{Name="Cabbage", Type="Rep", Faction=2, Rotate =	270}
-	Bing = XparkyBar:New{Name="Bing", Type="Rep", Faction=4, Rotate = 180}
 
 	Xparky:getFactions()
 	--self:ScheduleTimer("UpdateBars", 0.1, self)
@@ -238,57 +205,6 @@ function Xparky:OnInitialize()
 
 end
 	
-do
-
-	local timeout = 0
-
-	function Xparky:AttachBar(Bar)
-		local Foundation = db.ConnectedFrame and getglobal(db.ConnectedFrame) or nil
-		if Foundation then
-			Anchor:ClearAllPoints()
-
-			if db.Attach == "bottom" then
-				if db.Inside then
-					Anchor:SetPoint("BOTTOMLEFT", Foundation, "BOTTOMLEFT", db.xOffset, db.yOffset )
-				else
-					Anchor:SetPoint("TOPLEFT", Foundation, "BOTTOMLEFT", db.xOffset, db.yOffset )
-				end
-			elseif db.Attach == "top" then
-				if db.Inside then
-					Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT", db.xOffset, db.yOffset )
-				else
-					Anchor:SetPoint("BOTTOMLEFT", Foundation, "TOPLEFT", db.xOffset, db.yOffset )
-				end
-			elseif db.Attach == "left" then
-				if db.Inside then
-					Anchor:SetPoint("TOPLEFT", Foundation, "TOPLEFT", db.xOffset, db.yOffset )
-				else
-					Anchor:SetPoint("TOPRIGHT", Foundation, "TOPLEFT", db.xOffset, db.yOffset )
-				end
-			elseif db.Attach == "right" then
-				if db.Inside then
-					Anchor:SetPoint("TOPRIGHT", Foundation, "TOPRIGHT", db.xOffset, db.yOffset )
-				else
-					Anchor:SetPoint("TOPLEFT", Foundation, "TOPRIGHT", db.xOffset, db.yOffset )
-				end
-			end
-
-			Anchor:SetParent(Foundation)
-			self:ConnectBars()
-			self:UpdateBars()
-		else
-			if timeout > 5 then
-				self:Print(L["Cannot find frame specified"])
-				timeout = 0
-				return
-			end
-			self:ScheduleTimer("AttachBar", 1, self)
-			timeout = timeout + 1
-		end 
-	end
- 
-end
-
 function Xparky:InitialiseEvents()
 	self:RegisterEvent("PLAYER_XP_UPDATE", "UpdateBars")
 	self:RegisterEvent("PLAYER_REGEN_DISABLED","DisableUpdate")
