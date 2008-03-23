@@ -13,6 +13,7 @@ BaseBar = {
 				Direction = "forward",
 				Thickness = 8,
 				Spark = 1,
+				ShowLabel = true,
 				TextureFile = "Interface\\AddOns\\Xparky\\Textures\\texture.tga",
 				Spark1File =  "Interface\\AddOns\\Xparky\\Textures\\glow.tga",
 				Spark2File =  "Interface\\AddOns\\Xparky\\Textures\\glow2.tga",
@@ -27,7 +28,10 @@ function BaseBar:new(o)
 		o.Anchor:SetWidth(1)
 		o.Anchor:SetHeight(self.Thickness)
 		o.Anchor:Show()
+
 		if o.Type then
+			o.Label = o.Anchor:CreateFontString(o.Name.."Label","OVERLAY", "GameFontNormal")
+			o.Label:SetText(o.Name)
 			o.Anchor:EnableMouse(true)
 			o.Anchor:RegisterForDrag("LeftButton")
 			o.Anchor:SetMovable(true)
@@ -283,7 +287,16 @@ function XPBar:Update()
 	
 	self:Width(BarWidth)
 	self:Height(self.Thickness)
-	
+	if self.ShowLabel then
+		self.Label:SetParent(self.Sections[3].Anchor)
+		self.Label:SetTextHeight(self.Thickness)
+		self.Label:ClearAllPoints()
+		self.Label:SetPoint("CENTER", self.Anchor, "CENTER")
+		self.Label:Show()
+	else
+		self.Label:Hide()
+	end
+
 	self.Sections[1]:Width(Percent * CurrXP)
 	if Rest > (MaxXP - CurrXP) then
 		self.Sections[2]:Width(Percent * (MaxXP - CurrXP))
@@ -293,6 +306,7 @@ function XPBar:Update()
 		self.Sections[3]:Width(Percent * (MaxXP-CurrXP))
 	end
 
+	self.Anchor:SetFrameLevel(self.Sections[3].Anchor:GetFrameLevel() + 1)
 end
 
 --[[ RepBar Functions ]] --
@@ -338,11 +352,22 @@ function RepBar:Update()
 	self.Sections[2]:Height(self.Thickness)
 	self:Width(BarWidth)
 	self:Height(self.Thickness)
-	
+
+	if self.ShowLabel then	
+		self.Label:SetTextHeight(self.Thickness)
+		self.Label:SetParent(self.Sections[2].Anchor)
+		self.Label:ClearAllPoints()
+		self.Label:SetPoint("CENTER", self.Anchor, "CENTER")
+		self.Label:Show()
+	else
+		self.Label:Hide()
+	end
+
 	local name, description, standingID, bottomValue, topValue, earnedValue = GetFactionInfo(self.Faction) 
 	local Percent = BarWidth/(topValue - bottomValue)
 	self.Sections[1]:Width(Percent * (earnedValue - bottomValue))
 	self.Sections[2]:Width(Percent * (topValue - earnedValue))
+	self.Anchor:SetFrameLevel(self.Sections[2].Anchor:GetFrameLevel() + 2)
 
 end
 
@@ -352,6 +377,11 @@ XparkyBar = {}
 
 
 function XparkyBar:New(Bar)
+	if self.Bars and self.Bars[Bar.Name] then 
+		self.Bars[Bar.Name]:ConstructBar() 
+		return 
+	end
+	
 	if Bar.Type == "XP" then
 		Bar = XPBar:new(Bar)
 	else
@@ -360,6 +390,10 @@ function XparkyBar:New(Bar)
 	Bar:ConstructBar()
 	Bar.Anchor:ClearAllPoints()
 	Bar.Anchor:SetPoint("CENTER", UIParent)
+
+	if not self.Bars then self.Bars = {} end
+	
+	self.Bars[Bar.Name] = Bar
 	return Bar
 end
 

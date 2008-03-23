@@ -1,7 +1,7 @@
 local options = Xparky.options
 local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
-reg = LibStub("AceConfigRegistry-3.0")
-local db = Xparky.db
+local reg = LibStub("AceConfigRegistry-3.0")
+local db
 local Strata = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
 
 currentBar = {Type = "XP"}
@@ -9,10 +9,18 @@ currentBar = {Type = "XP"}
 factionTable = {}
 factionSort = {}
 
+function Xparky:InitialiseOptions()
+	db = Xparky.db.profile
+	options.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(Xparky.db)
+end
+
 options.type = "group"
 options.name  = "Xparky"
 options.get  = function( k )  return db[k.arg] end
 options.set  = function( k, v ) db[k.arg] = v; Xparky:UpdateBars(k.arg) end
+
+
+
 options.args = {}
 
 options.args.bars = {
@@ -26,19 +34,14 @@ options.args.bars = {
 			name = "Create a new bar",
 			order =  1,
 			inline = true,
+			set = function(k, v) currentBar[k.arg] = v; reg:NotifyChange("Xparky") end,
+			get = function(k) return currentBar[k.arg] end,
 			args = {
 				type = {
 					type = "select",
 					name = "Bar Type",
 					order = 1,
 					values = { XP = "XP Bar", Rep = "Rep Bar" },
-					set = function(k,v) 
-							currentBar.Type = v; 
-							reg:NotifyChange("Xparky") 
-						end,
-					get = function() 
-							return currentBar.Type or "XP" 
-						end,
 					arg = "Type",
 				},
 				name = {
@@ -52,9 +55,15 @@ options.args.bars = {
 								return 
 							end 
 							currentBar.Name = string.gsub(v, " ", ""); 
+							for i,name in ipairs(db.Bars.BarNames) do
+								if name == currentBar.Name then
+									Xparky:Print("There is a bar with that name already")
+									currentBar.Name = nil
+									return
+								end
+							end
 							reg:NotifyChange("Xparky") 
 						end,
-					get = function() return currentBar.Name end,
 					arg = "Name"
 				},
 				rep = {
@@ -68,8 +77,7 @@ options.args.bars = {
 							currentBar.Faction = factionSort[v]; 
 							reg:NotifyChange("Xparky") 
 						end,
-					get = function() return currentBar.FactionIndex end,
-					arg = "Faction",
+					arg = "FactionIndex",
 				},
 				create = {
 					type = "execute",
@@ -80,8 +88,13 @@ options.args.bars = {
 							end,
 					func =	function(k,v) 
 								if currentBar.Type == "XP" then
-
+									table.insert(db.Bars.BarNames, currentBar.Name)
+									db.Bars[currentBar.Name] = {Name = currentBar.Name, Type = "XP" }
+								elseif currentBar.Type == "Rep" then
+									table.insert(db.Bars.BarNames, currentBar.Name)
+									db.Bars[currentBar.Name] = {Name = currentBar.Name, Type = "Rep", Faction = factionTable[currentBar.Faction] }
 								end
+								Xparky:GenerateBars()
 							end
 				},
 			},

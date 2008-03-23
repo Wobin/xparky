@@ -8,40 +8,16 @@ local L = LibStub("AceLocale-3.0"):GetLocale("Xparky")
 local reg = LibStub("AceConfigRegistry-3.0")
 local dialog = LibStub("AceConfigDialog-3.0")
 local _G = getfenv(0)
+
 Xparky.options = {}
+
 local options = Xparky.options  
 local XPBar, NoXPBar, RepBar, NoRepBar, RestBar, Shadow, Anchor, Lego
 
+Xparky.db = {}
 
 local default = {
 	profile = {
-		barColours = {
-			XPBar = { Red = 0, Green = 0.4, Blue = 0.9, Alpha = 1 },
-			NoXPBar = { Red = 0.3, Green = 0.3, Blue = 0.3, Alpha = 1 },
-			RepBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
-			NoRepBar = { Red = 0, Green = 0.3, Blue = 1, Alpha = 1 },
-			RestBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
-		},
-		WatchedFaction = false,
-		Faction = 0,
-		ScreenWidth = 100,
-		LegoWidth = 50,
-		ShowXP = true,
-		ShowRep = false,
-		ShowShadow = true,
-		Thickness = 2,
-		Spark = 1,
-		Spark2 = 1,
-		Attach = "bottom",
-		Inside = false,
-		ConnectedFrame = "LegoXparky",
-		xOffset = 0,
-		yOffset = 0,
-		Strata = 5,
-		MouseHide = false,
-		MouseTooltip = true,
-		Lego = true,
-		LegoToGo = false,
 		LegoDB = {
 			width = 32,
 			height = 32,
@@ -53,18 +29,16 @@ local default = {
 		Bars = {
 			BarNames = { "XparkyXPBar", "XparkyRepBar" },
 			XparkyXPBar = {
+				Name = "XparkyXPBar",
 				Type = "XP",
-				Thickness = 2,
-				Spark = 1,
 			},
 			XparkyRepBar = {
+				Name = "XparkyRepBar",
 				Type = "Rep",
 				Colours = {
 					RepBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
 					NoRepBar = { Red = 0, Green = 0.3, Blue = 1, Alpha = 1 },
 				},
-				Thickness = 2,
-				Spark = 1,
 				Faction = 2,
 			}
 		}
@@ -73,10 +47,10 @@ local default = {
 
 
 
-Xparky.db = LibStub("AceDB-3.0"):New("XparkyDB", default, "profile")
-local db  = Xparky.db.profile
+local db  
 
 local mouser = CreateFrame("Frame")
+	
 mouser.tooltip = _G.GameTooltip
 mouser.setCursor = _G.SetCursor
 
@@ -182,16 +156,16 @@ local function MouseOut()
 end
 
 function Xparky:OnInitialize()
-	--db = Xparky.db.profile
+	Xparky.db = LibStub("AceDB-3.0"):New("XparkyDB", default)
+	self:InitialiseOptions()
+	
+	db = Xparky.db.profile
 	reg:RegisterOptionsTable("Xparky", options)
-	self:RegisterChatCommand("xparky", function() dialog:Open("Xparky") end)
-	if db.Lego then
-	--	self:ShowLegoBlock()
-	end
-	Frog = XparkyBar:New{Name="Frog", Type="XP", Rotate = 0}
+	self:RegisterChatCommand("xp", function() dialog:Open("Xparky") end)
 
+	--Frog = XparkyBar:New{Name="Frog", Type="XP", Rotate = 0}
+	Xparky:GenerateBars()
 	Xparky:getFactions()
-	--self:ScheduleTimer("UpdateBars", 0.1, self)
 	--Anchor:EnableMouse(true)
 	
 --[[	if db.MouseTooltip or db.MouseHide then 
@@ -203,6 +177,12 @@ function Xparky:OnInitialize()
 	end --]]
 
 
+end
+
+function Xparky:GenerateBars()
+	for i,v in ipairs(db.Bars.BarNames) do
+		XparkyBar:New(db.Bars[v])
+	end
 end
 	
 function Xparky:InitialiseEvents()
@@ -227,171 +207,3 @@ end
 function Xparky:EnableUpdate()
 	Xparky.UpdateMe = true
 end
-
-function Xparky:UpdateBars(dimensions, returnTooltip)
-	
-	if not Xparky.UpdateMe then return end
-
-	local total =  Width(Anchor:GetParent(), nil)
-	local currentXP, maxXP, restXP, remainXP, repName, repLevel, minRep, maxRep, currentRep
-	local xpString, repString, anchor
-
-	anchor = 0
-
-	if db.ShowXP then
-		currentXP = UnitXP("player")
-		maxXP = UnitXPMax("player")
-		restXP = GetXPExhaustion() or 0
-		remainXP = maxXP - (currentXP + restXP)
-		if remainXP < 0 then
-			remainXP = 0
-		end
-
-		Width(XPBar, (currentXP/maxXP)*total + 0.001)
-		if (restXP + currentXP)/maxXP > 1 then
-			Width(RestBar, total - Width(XPBar, nil) + 0.001)
-		else
-			Width(RestBar, (restXP/maxXP)*total + 0.001)
-		end
-		Width( NoXPBar, (remainXP/maxXP)*total + 0.001)
-
-		Width( XPBar.Spark, Width(XPBar) < 20 and Width(XPBar) * 5 or 128)
-		Width( XPBar.Spark2, Width(XPBar) < 20 and Width(XPBar) * 5 or 128)
-
-		if db.LegoToGo then
-			xpString = getHex("NoXPBar")..maxXP-currentXP.. L[" xp to go"]
-		else
-			xpString = getHex("XPBar") .. currentXP.."|r/"..getHex("NoXPBar") .. maxXP .. "|r - ["..string.format("%d%%", (currentXP/maxXP)*100).."] ("..string.format("%2d%%",((restXP)/maxXP)*100)..")"
-		end
-		anchor = db.Thickness
-
-		
-	end
-
-	if db.ShowRep then
-		repName, repLevel, minRep, maxRep, currentRep = GetWatchedFactionInfo()
-		if repName then
-			Width(RepBar, ((currentRep - minRep)/(maxRep-minRep))*total + 0.001)
-			Width(NoRepBar, ((maxRep - currentRep)/(maxRep - minRep))*total + 0.001)
-			if db.LegoToGo then
-				repString = getHex("NoRepBar") .. maxRep - currentRep .. L[" rep to go - "]..getHex(repLevel).."(".. repName..")"
-			else
-				repString = getHex("RepBar").. currentRep - minRep.."|r/"..getHex("NoRepBar") .. maxRep .."|r"
-			end
-			Width(RepBar.Spark, Width(RepBar) < 20 and Width(RepBar) * 5 or  128)
-			Width(RepBar.Spark2, Width(RepBar) < 20 and Width(RepBar) * 5 or  128)
-			anchor = anchor + db.Thickness
-		end
-	end
-	
-	if db.ShowShadow then
-		Width(Shadow, total)
-		anchor = anchor + 5
-	end
-
-	Width(Anchor, total)
-	Height(Anchor, anchor)
-	
-	if db.Lego and Lego then
-		Lego:SetText((xpString or "") .. (xpString and "\n" or "")..(repString or ""))
-	end
-
-	if returnTooltip then
-		if xpString then
-	        GameTooltip:AddLine(xpString)
-	    end
-	    if repString then
-	    	GameTooltip:AddLine(repString)
-		end
-		return
-	end
-
-	if type(dimensions) == "string" then	
-		if dimensions == "Thickness" then
-			Height(XPBar, db.Thickness)
-			Height(NoXPBar, db.Thickness)
-			Height(RestBar, db.Thickness)
-			Height(RepBar, db.Thickness)
-			Height(NoRepBar, db.Thickness)
-			Height(XPBar.Spark, db.Thickness * 8)
-			Height(XPBar.Spark2, db.Thickness * 8)
-			Height(RepBar.Spark, db.Thickness * 8)
-			Height(RepBar.Spark2, db.Thickness * 8)
-			Height(Shadow, 5)
-		elseif string.match(dimensions, "Bar") then
-			local Bar = getglobal(dimensions .. "Xparky")
-			SetColour(Bar, Bar.Texture)
-		elseif string.match(dimensions, "Spark") then
-			if dimensions == "Spark" then
-				XPBar.Spark:SetAlpha(db.Spark)
-			elseif dimensions == "Spark2" then
-				RepBar.Spark:SetAlpha(db.Spark2)
-			end
-		elseif string.match(dimensions, "Show") then
-			self:ConnectBars()
-		elseif string.match(dimensions, "Offset") then
-			self:AttachBar()
-		elseif string.match(dimensions, "Mouse") then
-			if not db.MouseTooltip and not db.MouseHide then
-				Anchor:SetScript("OnEnter", nil)
-				Anchor:SetScript("OnLeave", nil)
-				Anchor:EnableMouse(false)
-			else
-				Anchor:SetScript("OnEnter", MouseOver)
-				Anchor:SetScript("OnLeave",MouseOut) 
-				Anchor:EnableMouse(true)
-			end	
-			if not db.MouseHide then
-				Xparky:ConnectBars()
-			else
-				HideBars()
-			end
-		elseif string.match(dimensions,"ToGo") then
-			self:AttachBar()
-		elseif dimensions == "Attach" then
-			self:UpdateBars("Thickness")
-			self:AttachBar()
-		elseif dimensions == "Inside" then
-			self:AttachBar()
-		elseif dimensions == "Lego" then
-			if db.Lego then
-				self:ShowLegoBlock()
-			elseif Lego and Lego:IsVisible() then
-				Lego:Hide()
-			end
-		elseif dimensions == "Strata" then
-			SetStrata()
-		end
-	end
-end
-
-function Xparky:ShowLegoBlock()
-	if not Lego then
-		Lego = LibStub("LegoBlock-Beta1"):New("Xparky")
-		Lego:SetDB(db.LegoDB)
-		Lego:RegisterForClicks("LeftButtonUp","RightButtonUp")
-		Lego:SetScript("OnClick", 
-								function() 
-									if IsShiftKeyDown() then
-										local report = ""
-										local st, sp = string.find(Lego.text:GetText(), "\n", 0, true)
-										if GetMouseButtonClicked() == "LeftButton" then
-											report = string.gsub(string.sub(Lego.text:GetText(), 0, st - 1), "|c%x%x%x%x%x%x%x%x", "")
-										else
-											report = string.gsub(string.sub(Lego.text:GetText(), sp + 1), "|c%x%x%x%x%x%x%x%x", "")
-										end
-										DEFAULT_CHAT_FRAME.editBox:SetText(string.gsub(report, "|r", ""))
-										return
-									end
-									db.LegoToGo = not db.LegoToGo; 
-									self:AttachBar(); 
-									self:AttachBar() 
-									reg:NotifyChange("Xparky") 
-								end)
-	end
-	Lego:Show()
-	if Anchor then self:AttachBar() end
-end
-
-
-
