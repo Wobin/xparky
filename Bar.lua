@@ -6,10 +6,10 @@ local angles = {[180] = { 1,0,1,1,0,0,0,1}, [0] = {0,1,0,0,1,1,1,0}, [270] = {1,
 XparkyBar = {}
 
 local Bar = XparkyBar
-
 --[[ Base Bar functions ]] --
 
-BaseBar = {
+
+local BaseBar = {
 				Direction = "forward",
 				Thickness = 8,
 				Spark = 1,
@@ -17,19 +17,74 @@ BaseBar = {
 				TextureFile = "Interface\\AddOns\\Xparky\\Textures\\texture.tga",
 				Spark1File =  "Interface\\AddOns\\Xparky\\Textures\\glow.tga",
 				Spark2File =  "Interface\\AddOns\\Xparky\\Textures\\glow2.tga",
-}
+
+			}
 
 function BaseBar:new(o)
 	o = o or {}
 	setmetatable(o, self)
-	self.__index = self
 	if o.Name then
 		o.Anchor = CreateFrame("Frame", o.Name .. "Xparky", UIParent)
 		o.Anchor:SetWidth(1)
 		o.Anchor:SetHeight(self.Thickness)
 		o.Anchor:Show()
 
-		if o.Type then
+		if o.BarType then
+			o.Options = {
+					type = "group",
+					handler = o,
+					name = o.Name,
+					set = function(info,v) info.handler[info.arg] = v; info.handler:ConstructBar() end,
+					get = function(info) return info.handler[info.arg] end,
+					args = {
+						barname = {
+							type = "header",
+							order = 1,
+							name = o.Name
+						},
+						width = {
+							type = "range",
+							name = "Bar Length",
+							desc = "How long the bar is",
+							min = 0.1, max = 2000, step = 1,
+							arg = "BarWidth",
+							order = 2,
+						},
+						thickness = {
+							type = "range",
+							name = "Bar Thickness",
+							desc = "How thick the bar is",
+							min = 0.1, max = 32, step = 0.5,
+							arg = "Thickness",
+							order = 3
+						},
+						spark = {
+							type = "range",
+							name = "Spark intensity",
+							desc = "Alpha of the spark",
+							min = 0, max = 1, step = 0.5,
+							arg = "Spark",
+							order = 4,
+						},
+						colours = {
+							type = "group",
+							inline = true,
+							name = "Colours",
+							desc = "Colours of the sections",
+							order = 5,
+							get = function(info)
+									local t = info.handler.Colours[info.arg] or { Red = 1, Green = 1, Blue = 1, Alpha = 1}
+									return t.Red, t.Green, t.Blue, t.Alpha
+									end,
+							set = function(info, r, g ,b, a)
+									local t = info.handler.Colours[info.arg]
+									t.Red, t.Green, t.Blue, t.Alpha = r, g, b, a
+									info.handler:ConstructBar()
+									end,
+							args = {}
+						},
+					}
+				}
 			o.Label = o.Anchor:CreateFontString(o.Name.."Label","OVERLAY", "GameFontNormal")
 			o.Label:SetText(o.Name)
 			o.Anchor:EnableMouse(true)
@@ -45,6 +100,7 @@ function BaseBar:new(o)
 			o:CreateTextures()
 		end
 	end 
+	self.__index = self
 	return o
 end
 
@@ -238,8 +294,8 @@ function BaseBar:ConstructBar()
 end
 --[[ XP Bar Functions ]]--
 
-XPBar = BaseBar:new{
-				Type = "XP",
+local XPBar = BaseBar:new{
+				BarType = "XP",
 				Colours = {
 					XPBar = { Red = 0, Green = 0.4, Blue = 0.9, Alpha = 1 },
 					NoXPBar = { Red = 0.3, Green = 0.3, Blue = 0.3, Alpha = 1 },
@@ -263,7 +319,21 @@ function XPBar:new(o)
 	-- NoXP
 	local n = BaseBar:new{Name = "NoXP"..o.Name, Rotate = o.Rotate}
 	setmetatable(n, self)
-	
+	if self.Colours then
+		local count = 1
+		for i,v in pairs(self.Colours) do
+			o.Options.args.colours.args[i] = {
+				order = count,
+				name = i,
+				desc = "Colour of the "..i.." bar",
+				type = "color",
+				hasAlpha = true,
+				arg = i
+			}
+			count = count + 1
+		end
+	end
+
 	self.__index = self
 
 	o.Sections = {[1] = x, [2] = r, [3] = n}
@@ -287,14 +357,14 @@ function XPBar:Update()
 	
 	self:Width(BarWidth)
 	self:Height(self.Thickness)
+	self.Label:Hide()
 	if self.ShowLabel then
 		self.Label:SetParent(self.Sections[3].Anchor)
 		self.Label:SetTextHeight(self.Thickness)
+		self.Label:SetText(self.Name)
 		self.Label:ClearAllPoints()
 		self.Label:SetPoint("CENTER", self.Anchor, "CENTER")
 		self.Label:Show()
-	else
-		self.Label:Hide()
 	end
 
 	self.Sections[1]:Width(Percent * CurrXP)
@@ -311,8 +381,8 @@ end
 
 --[[ RepBar Functions ]] --
 
-RepBar = BaseBar:new{
-				Type = "Rep",
+local RepBar = BaseBar:new{
+				BarType = "Rep",
 				Colours = {
 					RepBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
 					NoRepBar = { Red = 0, Green = 0.3, Blue = 1, Alpha = 1 },
@@ -333,6 +403,21 @@ function RepBar:new(o)
 	setmetatable(r, self)
 	local n = BaseBar:new{Name = "NoRep"..o.Name, Rotate = o.Rotate, Faction = o.Faction}
 	setmetatable(n, self)
+	if o.Colours or self.Colours then
+
+		local count = 1
+		for i,v in pairs(o.Colours or self.Colours) do
+			o.Options.args.colours.args[i] = {
+				order = count,
+				name = i,
+				desc = "Colour of the "..i.." bar",
+				type = "color",
+				hasAlpha = true,
+				arg = i
+			}
+			count = count + 1
+		end
+	end
 
 	self.__index = self
 	o.Sections = {[1] = r, [2] = n}
@@ -352,6 +437,7 @@ function RepBar:Update()
 	self.Sections[2]:Height(self.Thickness)
 	self:Width(BarWidth)
 	self:Height(self.Thickness)
+	self.Label:Hide()
 
 	if self.ShowLabel then	
 		self.Label:SetTextHeight(self.Thickness)
@@ -359,8 +445,6 @@ function RepBar:Update()
 		self.Label:ClearAllPoints()
 		self.Label:SetPoint("CENTER", self.Anchor, "CENTER")
 		self.Label:Show()
-	else
-		self.Label:Hide()
 	end
 
 	local name, description, standingID, bottomValue, topValue, earnedValue = GetFactionInfo(self.Faction) 
@@ -382,7 +466,7 @@ function XparkyBar:New(Bar)
 		return 
 	end
 	
-	if Bar.Type == "XP" then
+	if Bar.BarType == "XP" then
 		Bar = XPBar:new(Bar)
 	else
 		Bar = RepBar:new(Bar)

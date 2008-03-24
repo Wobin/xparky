@@ -89,10 +89,10 @@ options.args.bars = {
 					func =	function(k,v) 
 								if currentBar.Type == "XP" then
 									table.insert(db.Bars.BarNames, currentBar.Name)
-									db.Bars[currentBar.Name] = {Name = currentBar.Name, Type = "XP" }
+									db.Bars[currentBar.Name] = {Name = currentBar.Name, BarType = "XP" }
 								elseif currentBar.Type == "Rep" then
 									table.insert(db.Bars.BarNames, currentBar.Name)
-									db.Bars[currentBar.Name] = {Name = currentBar.Name, Type = "Rep", Faction = factionTable[currentBar.Faction] }
+									db.Bars[currentBar.Name] = {Name = currentBar.Name, BarType = "Rep", Faction = factionTable[currentBar.Faction] }
 								end
 								Xparky:GenerateBars()
 							end
@@ -101,14 +101,12 @@ options.args.bars = {
 		},
 	},
 }
-options.args.framelink = {
+
+options.args.bars.args.barlist = {
 	type = "group",
-	name = L["Frame Link"],
+	name = "Bar List",
 	order = 1,
-	inline = true,
-	args = {
-		
-	},
+	args = {}
 }
 
 options.args.help = {
@@ -167,3 +165,22 @@ function Xparky:getFactions()
 		table.sort(factionSort, function(a,b) return a:gsub("The ", "") < b:gsub("The ", "") end)
 	end
 end
+
+function getBaseMetatable(t)
+	if not getmetatable(t) then
+		return t
+	else
+		return getBaseMetatable(getmetatable(t))
+	end
+end
+
+
+function Xparky:GenerateBarList()
+	for i,BarName in ipairs(db.Bars.BarNames) do
+		local Bar = db.Bars[BarName]
+		Xparky.options.args.bars.args.barlist.args[Bar.Name] = Bar.Options
+	end
+	reg:NotifyChange("Xparky")
+end
+
+
