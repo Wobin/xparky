@@ -27,18 +27,14 @@ local default = {
 			group = nil
 		},
 		Bars = {
-			BarNames = { "XparkyXPBar", "XparkyRepBar" },
-			XparkyXPBar = {
-				Name = "XparkyXPBar",
-				Type = "XP",
+			BarNames = { "XPBar", "RepBar" },
+			XPBar = {
+				Name = "XPBar",
+				BarType = "XP",
 			},
-			XparkyRepBar = {
-				Name = "XparkyRepBar",
-				Type = "Rep",
-				Colours = {
-					RepBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
-					NoRepBar = { Red = 0, Green = 0.3, Blue = 1, Alpha = 1 },
-				},
+			RepBar = {
+				Name = "RepBar",
+				BarType = "Rep",
 				Faction = 2,
 			}
 		}
@@ -166,6 +162,7 @@ function Xparky:OnInitialize()
 	--Frog = XparkyBar:New{Name="Frog", Type="XP", Rotate = 0}
 	Xparky:GenerateBars()
 	Xparky:getFactions()
+	Xparky:GenerateBarList()
 	--Anchor:EnableMouse(true)
 	
 --[[	if db.MouseTooltip or db.MouseHide then 
@@ -184,7 +181,21 @@ function Xparky:GenerateBars()
 		XparkyBar:New(db.Bars[v])
 	end
 end
-	
+
+
+function Xparky:Compare()
+	local first
+	for i,v in ipairs(db.Bars.BarNames) do
+		if not first then 
+			first = db.Bars[v].Options 
+		else
+			if first == db.Bars[v].Options then
+				Xparky:Print("Matching")
+			end
+		end
+	end
+end
+
 function Xparky:InitialiseEvents()
 	self:RegisterEvent("PLAYER_XP_UPDATE", "UpdateBars")
 	self:RegisterEvent("PLAYER_REGEN_DISABLED","DisableUpdate")
