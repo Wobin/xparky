@@ -45,47 +45,6 @@ local default = {
 
 local db  
 
-local mouser = CreateFrame("Frame")
-	
-mouser.tooltip = _G.GameTooltip
-mouser.setCursor = _G.SetCursor
-
-function mouser:OnUpdate(elap)
-    if IsMouseButtonDown("RightButton") then
-        return self:Stop()
-    end
-
-    local frame = GetMouseFocus()
-    local name = frame and frame:GetName() or tostring(frame)
-    
-    SetCursor("CAST_CURSOR")
-    if not frame then return end
-    self.tooltip:SetOwner(frame, "ANCHOR_BOTTOMLEFT")
-    self.tooltip:SetText(name, 1.0, 0.82, 0)
-    self.tooltip:Show()
-    
-    if IsMouseButtonDown("LeftButton") then
-        self:Stop()
-        if not type(frame.GetName) == 'function' or not frame:GetName() then
-            Xparky:Print(L["This frame has no global name, and cannot be added via the mouse"])
-        else
-        	db.ConnectedFrame = name
-        	Xparky:AttachBar()
-        	reg:NotifyChange("Xparky")
-        end
-    end
-end
-
-function mouser:Start()
-    self:SetScript("OnUpdate", self.OnUpdate)
-end
-
-function mouser:Stop()
-    self.tooltip:Hide()
-    self:SetScript("OnUpdate", nil)
-end
-hooksecurefunc(_G.GameMenuFrame, "Show", function() mouser:Stop() end)
-
 
 
 --[[ Local helper functions --]]
