@@ -7,6 +7,78 @@ XparkyBar = {}
 
 local Bar = XparkyBar
 --[[ Base Bar functions ]] --
+local function cloneTable(t)
+	local clone = {}
+	for i,v in pairs(t) do
+		if type(v) == "table" then
+			clone[i] = cloneTable(t)
+		else
+			clone[i] = t[v]
+		end
+	end
+	return clone
+end
+
+local mouser = CreateFrame("Frame")
+local tb = {A = "top", B = "bottom", 
+				SideA = function(frame) return MouseIsOver(frame, 0, frame:GetHeight()/2, 0, 0) end, 
+				SideB = function(frame) return MouseIsOver(frame, 0 - frame:GetHeight()/2, 0, 0, 0) end, 
+			}
+local lr = {A = "left", B = "right",
+				SideA = function(frame) return MouseIsOver(frame, 0, 0, 0, 0 - frame:GetWidth()/2) end, 
+				SideB = function(frame) return MouseIsOver(frame, 0, 0, frame:GetHeight()/2, 0) end, 
+			}
+mouser.tooltip = _G.GameTooltip
+mouser.setCursor = _G.SetCursor
+
+local function mouser:OnUpdate(elap)
+    if IsMouseButtonDown("RightButton") then
+        return self:Stop()
+    end
+
+    local frame = GetMouseFocus()
+    local name = frame and frame:GetName() or tostring(frame)
+    
+    SetCursor("CAST_CURSOR")
+    if not frame then return end
+    self.tooltip:SetOwner(frame, "ANCHOR_BOTTOMLEFT")
+	local side
+	if mouser.side[SideA]() then
+		side = mouser.side[A]
+	else
+		side = mouser.side[B]
+	end
+    self.tooltip:SetText(name .. " ("..side..")", 1.0, 0.82, 0)
+    self.tooltip:Show()
+    
+    if IsMouseButtonDown("LeftButton") then
+        self:Stop()
+        if not type(frame.GetName) == 'function' or not frame:GetName() then
+            Xparky:Print(L["This frame has no global name, and cannot be added via the mouse"])
+        else
+        	mouser.SetConnectedFrame(mouser.bar, name, side)
+        	Xparky:AttachBar()
+        	reg:NotifyChange("Xparky")
+        end
+    end
+end
+
+local function mouser:Start(angle)
+	if angle == 90 or angle == 270 then
+		mouser.side = tb
+	else
+		mouser.side = lr
+	end
+    self:SetScript("OnUpdate", self.OnUpdate)
+end
+
+function mouser:Stop()
+    self.tooltip:Hide()
+	self.bar = nil
+	self.side = nil
+    self:SetScript("OnUpdate", nil)
+end
+hooksecurefunc(_G.GameMenuFrame, "Show", function() mouser:Stop() end)
 
 
 local BaseBar = {
@@ -20,8 +92,12 @@ local BaseBar = {
 
 			}
 
+function BaseBar:AttachBarToFrame(frame, side)
+	Xparky:Print("Attach "..self.Name.." to "..frame.." on the "..side.." side")
+end
+
 function BaseBar:new(o)
-	o = o or {}
+	o = cloneTable(o)
 	setmetatable(o, self)
 	if o.Name then
 		o.Anchor = CreateFrame("Frame", o.Name .. "Xparky", UIParent)
@@ -34,7 +110,11 @@ function BaseBar:new(o)
 					type = "group",
 					handler = o,
 					name = o.Name,
-					set = function(info,v) info.handler[info.arg] = v; info.handler:ConstructBar() end,
+					set = function(info,v) 
+							Xparky.db.profile.Bars[info.handler.Name][info.arg] = v;
+							info.handler[info.arg] = v
+							info.handler:ConstructBar() 
+						end,
 					get = function(info) return info.handler[info.arg] end,
 					args = {
 						barname = {
@@ -66,6 +146,19 @@ function BaseBar:new(o)
 							arg = "Spark",
 							order = 4,
 						},
+						rotation = {
+							type = "select",
+							name = "Bar Rotation",
+							desc = "Angle at which the bar runs",
+							values = {0 = 0, 90 = 90, 180 = 180, 270 = 270},
+							arg = "Rotate"
+						},
+						attach = {
+							type = "execute",
+							name = "Attach to frame",
+							func = function() mouser.SetConnectedFrame = self.AttachBarToFrame; mouser.bar = self; mouser:Start() end
+						},
+
 						colours = {
 							type = "group",
 							inline = true,
@@ -78,7 +171,9 @@ function BaseBar:new(o)
 									end,
 							set = function(info, r, g ,b, a)
 									local t = info.handler.Colours[info.arg]
+									local dbt = Xparky.db.profile[info.handler.Name].Colours[info.arg]
 									t.Red, t.Green, t.Blue, t.Alpha = r, g, b, a
+									dbt.Red, dbt.Green, dbt.Blue, dbt.Alpha = r, g, b, a
 									info.handler:ConstructBar()
 									end,
 							args = {}
