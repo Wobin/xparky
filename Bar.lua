@@ -56,8 +56,8 @@ local function mouser:OnUpdate(elap)
         if not type(frame.GetName) == 'function' or not frame:GetName() then
             Xparky:Print(L["This frame has no global name, and cannot be added via the mouse"])
         else
-        	mouser.SetConnectedFrame(mouser.bar, name, side)
-        	Xparky:AttachBar()
+        	mouser.bar:SetConnectedFrame(name, side)
+        	mouser.bar:ConstructBar()
         	reg:NotifyChange("Xparky")
         end
     end
@@ -113,7 +113,8 @@ function BaseBar:new(o)
 					set = function(info,v) 
 							Xparky.db.profile.Bars[info.handler.Name][info.arg] = v;
 							info.handler[info.arg] = v
-							info.handler:ConstructBar() 
+							info.handler:ConstructBar()
+							reg:NotifyChange("Xparky")
 						end,
 					get = function(info) return info.handler[info.arg] end,
 					args = {
@@ -151,14 +152,37 @@ function BaseBar:new(o)
 							name = "Bar Rotation",
 							desc = "Angle at which the bar runs",
 							values = {0 = 0, 90 = 90, 180 = 180, 270 = 270},
+							order = 5
 							arg = "Rotate"
 						},
 						attach = {
 							type = "execute",
 							name = "Attach to frame",
-							func = function() mouser.SetConnectedFrame = self.AttachBarToFrame; mouser.bar = self; mouser:Start() end
+							func = function() mouser.bar = self; mouser:Start() end,
+							order = 6,
 						},
-
+						attached = {
+							type = "input",
+							name = "Attached to frame",
+							arg = "Attached",
+							order = 7,
+						},
+						xoffset = {
+							type = "input",
+							name = "X offset",
+							desc = "Offset from the frame in the X axis",
+							arg = "Xoffset",
+							order = 8,
+							hidden = function(info) return info.handler.Attached ~= "" end,
+						},
+						yoffset = {
+							type = "input",
+							name = "Y offset",
+							desc = "Offset from the frame in the Y axis",
+							arg = "Yoffset",
+							order = 9,
+							hidden = function(info) return info.handler.Attached ~= "" end,
+						},
 						colours = {
 							type = "group",
 							inline = true,
