@@ -555,13 +555,9 @@ end
 XparkyBar = {}
 
 
+
 function XparkyBar:New(Bar)
-	if self.Bars and self.Bars[Bar.Name] then 
-		self.Bars[Bar.Name]:ConstructBar() 
-		return 
-	end
-	
-	if Bar.BarType == "XP" then
+	if Bar.Type == "XP" then
 		Bar = XPBar:new(Bar)
 	else
 		Bar = RepBar:new(Bar)
