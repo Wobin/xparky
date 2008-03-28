@@ -177,7 +177,7 @@ end
 
 function Xparky:GenerateBarList()
 	for i,BarName in ipairs(db.Bars.BarNames) do
-		local Bar = db.Bars[BarName]
+		local Bar = XparkyBar.Bars[BarName]
 		Xparky.options.args.bars.args.barlist.args[Bar.Name] = Bar.Options
 	end
 	reg:NotifyChange("Xparky")

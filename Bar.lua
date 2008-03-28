@@ -1,5 +1,6 @@
 local defaultBar = {}
 
+local reg = LibStub("AceConfigRegistry-3.0")
 local Strata = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
 local angles = {[180] = { 1,0,1,1,0,0,0,1}, [0] = {0,1,0,0,1,1,1,0}, [270] = {1,1,0,1,1,0,0,0}, [90] = {0,0,1,0,0,1,1,1}}
 
@@ -13,7 +14,7 @@ local function cloneTable(t)
 		if type(v) == "table" then
 			clone[i] = cloneTable(t)
 		else
-			clone[i] = t[v]
+			clone[i] = v
 		end
 	end
 	return clone
@@ -31,7 +32,11 @@ local lr = {A = "left", B = "right",
 mouser.tooltip = _G.GameTooltip
 mouser.setCursor = _G.SetCursor
 
+<<<<<<< HEAD:Bar.lua
 local function mouser:OnUpdate(elap)
+=======
+function mouser:OnUpdate(elap)
+>>>>>>> 141064770d89824731a314ce30ae8c1d5748b07d:Bar.lua
     if IsMouseButtonDown("RightButton") then
         return self:Stop()
     end
@@ -43,10 +48,10 @@ local function mouser:OnUpdate(elap)
     if not frame then return end
     self.tooltip:SetOwner(frame, "ANCHOR_BOTTOMLEFT")
 	local side
-	if mouser.side[SideA]() then
-		side = mouser.side[A]
+	if mouser.side.SideA(frame) then
+		side = mouser.side.A
 	else
-		side = mouser.side[B]
+		side = mouser.side.B
 	end
     self.tooltip:SetText(name .. " ("..side..")", 1.0, 0.82, 0)
     self.tooltip:Show()
@@ -54,28 +59,26 @@ local function mouser:OnUpdate(elap)
     if IsMouseButtonDown("LeftButton") then
         self:Stop()
         if not type(frame.GetName) == 'function' or not frame:GetName() then
-            Xparky:Print(L["This frame has no global name, and cannot be added via the mouse"])
+            Xparky:Print("This frame has no global name, and cannot be added via the mouse")
         else
-        	mouser.SetConnectedFrame(mouser.bar, name, side)
-        	Xparky:AttachBar()
+        	mouser.bar:SetConnectedFrame(name, side)
+        	mouser.bar:ConstructBar()
         	reg:NotifyChange("Xparky")
         end
     end
 end
 
-local function mouser:Start(angle)
+function mouser:Start(angle)
 	if angle == 90 or angle == 270 then
-		mouser.side = tb
-	else
 		mouser.side = lr
+	else
+		mouser.side = tb
 	end
     self:SetScript("OnUpdate", self.OnUpdate)
 end
 
 function mouser:Stop()
     self.tooltip:Hide()
-	self.bar = nil
-	self.side = nil
     self:SetScript("OnUpdate", nil)
 end
 hooksecurefunc(_G.GameMenuFrame, "Show", function() mouser:Stop() end)
@@ -94,10 +97,11 @@ local BaseBar = {
 
 function BaseBar:AttachBarToFrame(frame, side)
 	Xparky:Print("Attach "..self.Name.." to "..frame.." on the "..side.." side")
+	mouser.bar = nil
+	mouser.side = nil
 end
 
 function BaseBar:new(o)
-	o = cloneTable(o)
 	setmetatable(o, self)
 	if o.Name then
 		o.Anchor = CreateFrame("Frame", o.Name .. "Xparky", UIParent)
@@ -113,7 +117,8 @@ function BaseBar:new(o)
 					set = function(info,v) 
 							Xparky.db.profile.Bars[info.handler.Name][info.arg] = v;
 							info.handler[info.arg] = v
-							info.handler:ConstructBar() 
+							info.handler:ConstructBar()
+							reg:NotifyChange("Xparky")
 						end,
 					get = function(info) return info.handler[info.arg] end,
 					args = {
@@ -150,21 +155,44 @@ function BaseBar:new(o)
 							type = "select",
 							name = "Bar Rotation",
 							desc = "Angle at which the bar runs",
-							values = {0 = 0, 90 = 90, 180 = 180, 270 = 270},
+							values = {[0] = 0, [90] = 90, [180] = 180, [270] = 270},
+							order = 5,
 							arg = "Rotate"
 						},
 						attach = {
 							type = "execute",
 							name = "Attach to frame",
-							func = function() mouser.SetConnectedFrame = self.AttachBarToFrame; mouser.bar = self; mouser:Start() end
+							func = function(info) mouser.bar = info.handler; mouser:Start(info.handler.Rotate) end,
+							order = 6,
 						},
-
+						attached = {
+							type = "input",
+							name = "Attached to frame",
+							arg = "Attached",
+							order = 7,
+						},
+						xoffset = {
+							type = "input",
+							name = "X offset",
+							desc = "Offset from the frame in the X axis",
+							arg = "Xoffset",
+							order = 8,
+							hidden = function(info) return info.handler.Attached ~= "" end,
+						},
+						yoffset = {
+							type = "input",
+							name = "Y offset",
+							desc = "Offset from the frame in the Y axis",
+							arg = "Yoffset",
+							order = 9,
+							hidden = function(info) return info.handler.Attached ~= "" end,
+						},
 						colours = {
 							type = "group",
 							inline = true,
 							name = "Colours",
 							desc = "Colours of the sections",
-							order = 5,
+							order = 10,
 							get = function(info)
 									local t = info.handler.Colours[info.arg] or { Red = 1, Green = 1, Blue = 1, Alpha = 1}
 									return t.Red, t.Green, t.Blue, t.Alpha
@@ -557,10 +585,15 @@ XparkyBar = {}
 
 
 function XparkyBar:New(Bar)
-	if Bar.Type == "XP" then
-		Bar = XPBar:new(Bar)
+	if self.Bars and self.Bars[Bar.Name] then 
+		self.Bars[Bar.Name]:ConstructBar() 
+		return 
+	end
+	
+	if Bar.BarType == "XP" then
+		Bar = XPBar:new(cloneTable(Bar))
 	else
-		Bar = RepBar:new(Bar)
+		Bar = RepBar:new(cloneTable(Bar))
 	end
 	Bar:ConstructBar()
 	Bar.Anchor:ClearAllPoints()
