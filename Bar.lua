@@ -32,11 +32,7 @@ local lr = {A = "left", B = "right",
 mouser.tooltip = _G.GameTooltip
 mouser.setCursor = _G.SetCursor
 
-<<<<<<< HEAD:Bar.lua
-local function mouser:OnUpdate(elap)
-=======
 function mouser:OnUpdate(elap)
->>>>>>> 141064770d89824731a314ce30ae8c1d5748b07d:Bar.lua
     if IsMouseButtonDown("RightButton") then
         return self:Stop()
     end
@@ -83,6 +79,30 @@ function mouser:Stop()
 end
 hooksecurefunc(_G.GameMenuFrame, "Show", function() mouser:Stop() end)
 
+local function MouseOver()
+	if db.MouseTooltip then
+		GameTooltip:SetOwner(Anchor, "ANCHOR_CURSOR")
+		Xparky:UpdateBars(nil, true)
+		if GetMouseFocus() == Anchor then
+			GameTooltip:Show()
+		end
+	end
+	if db.MouseHide then
+		Xparky:ConnectBars()
+	end
+end
+
+local function MouseOut()
+	if db.MouseTooltip then
+		if GameTooltip:IsOwned(Anchor) then
+			GameTooltip:SetOwner(UIParent)
+			GameTooltip:Hide()
+		end
+	end
+	if db.MouseHide then
+		HideBars()
+	end
+end
 
 local BaseBar = {
 				Direction = "forward",
@@ -96,7 +116,9 @@ local BaseBar = {
 			}
 
 function BaseBar:AttachBarToFrame(frame, side)
-	Xparky:Print("Attach "..self.Name.." to "..frame.." on the "..side.." side")
+	Xparky:Print("Attach "..self.Name.." to "..frame:GetName().." on the "..side.." side")
+	self.Attach = frame:GetName()
+	self.Attached = side
 	mouser.bar = nil
 	mouser.side = nil
 end
@@ -168,8 +190,15 @@ function BaseBar:new(o)
 						attached = {
 							type = "input",
 							name = "Attached to frame",
-							arg = "Attached",
+							arg = "Attach",
 							order = 7,
+						},
+						side = {
+							type = "select",
+							name = "Side of frame",
+							arg = "Attached",
+							hidden = function(info) return info.handler.Attach and info.handler.Attach ~= "" end,
+							values = function(info) if info.handler.Rotate == 90 or info.handler.Rotate == 270 then return { left = "Left", right = "Right" } else return {top = "Top", bottom = "Bottom" } end end,
 						},
 						xoffset = {
 							type = "input",
@@ -177,7 +206,7 @@ function BaseBar:new(o)
 							desc = "Offset from the frame in the X axis",
 							arg = "Xoffset",
 							order = 8,
-							hidden = function(info) return info.handler.Attached ~= "" end,
+							hidden = function(info) return info.handler.Attach and info.handler.Attach ~= "" end,
 						},
 						yoffset = {
 							type = "input",
@@ -185,7 +214,7 @@ function BaseBar:new(o)
 							desc = "Offset from the frame in the Y axis",
 							arg = "Yoffset",
 							order = 9,
-							hidden = function(info) return info.handler.Attached ~= "" end,
+							hidden = function(info) return info.handler.Attach and info.handler.Attach ~= "" end,
 						},
 						colours = {
 							type = "group",
@@ -208,8 +237,18 @@ function BaseBar:new(o)
 						},
 					}
 				}
+		if o.MouseTooltip or o.MouseHide then 
+		    o.Anchor:SetScript("OnEnter",function(self) self.Bar:MouseOver() end)
+			o.Anchor:SetScript("OnLeave",function(self) self.Bar:MouseOut() end) 
+			if o.MouseHide then
+				o:HideBars()
+			end
+		end 
+
+
 			o.Label = o.Anchor:CreateFontString(o.Name.."Label","OVERLAY", "GameFontNormal")
 			o.Label:SetText(o.Name)
+			o.Anchor.Bar = o
 			o.Anchor:EnableMouse(true)
 			o.Anchor:RegisterForDrag("LeftButton")
 			o.Anchor:SetMovable(true)
@@ -343,7 +382,7 @@ local function GetXY(Width, Rotate)
 end
 
 function BaseBar:ConstructBar()
-	local Attached = nil
+	local Attached = self.Attached or nil
 
 	if not self.Sections then return end
 	
