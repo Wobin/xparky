@@ -12,7 +12,7 @@ local function cloneTable(t)
 	local clone = {}
 	for i,v in pairs(t) do
 		if type(v) == "table" then
-			clone[i] = cloneTable(t)
+			clone[i] = cloneTable(v)
 		else
 			clone[i] = v
 		end
@@ -57,8 +57,10 @@ function mouser:OnUpdate(elap)
         if not type(frame.GetName) == 'function' or not frame:GetName() then
             Xparky:Print("This frame has no global name, and cannot be added via the mouse")
         else
-        	mouser.bar:SetConnectedFrame(name, side)
+        	mouser.bar:AttachBarToFrame(name, side)
         	mouser.bar:ConstructBar()
+			mouser.bar = nil
+			mouser.side = nil
         	reg:NotifyChange("Xparky")
         end
     end
@@ -70,6 +72,7 @@ function mouser:Start(angle)
 	else
 		mouser.side = tb
 	end
+	Xparky:Print(mouser.bar.Name)
     self:SetScript("OnUpdate", self.OnUpdate)
 end
 
@@ -116,11 +119,9 @@ local BaseBar = {
 			}
 
 function BaseBar:AttachBarToFrame(frame, side)
-	Xparky:Print("Attach "..self.Name.." to "..frame:GetName().." on the "..side.." side")
-	self.Attach = frame:GetName()
+	Xparky:Print("Attach "..self.Name.." to "..frame.." on the "..side.." side")
+	self.Attach = frame
 	self.Attached = side
-	mouser.bar = nil
-	mouser.side = nil
 end
 
 function BaseBar:new(o)
@@ -181,6 +182,12 @@ function BaseBar:new(o)
 							order = 5,
 							arg = "Rotate"
 						},
+						label = {
+							type = "toggle",
+							name = "Show Label",
+							desc = "Show the bar label",
+							arg = "ShowLabel",
+						},
 						attach = {
 							type = "execute",
 							name = "Attach to frame",
@@ -228,7 +235,13 @@ function BaseBar:new(o)
 									end,
 							set = function(info, r, g ,b, a)
 									local t = info.handler.Colours[info.arg]
-									local dbt = Xparky.db.profile[info.handler.Name].Colours[info.arg]
+									if not Xparky.db.profile.Bars[info.handler.Name].Colours then 
+										Xparky.db.profile.Bars[info.handler.Name].Colours = {}
+									end
+									if not Xparky.db.profile.Bars[info.handler.Name].Colours[info.arg] then 
+										Xparky.db.profile.Bars[info.handler.Name].Colours[info.arg] = {} 
+									end
+									local dbt = Xparky.db.profile.Bars[info.handler.Name].Colours[info.arg]
 									t.Red, t.Green, t.Blue, t.Alpha = r, g, b, a
 									dbt.Red, dbt.Green, dbt.Blue, dbt.Alpha = r, g, b, a
 									info.handler:ConstructBar()
@@ -382,28 +395,29 @@ local function GetXY(Width, Rotate)
 end
 
 function BaseBar:ConstructBar()
-	local Attached = self.Attached or nil
+	local Attached = nil 
 
 	if not self.Sections then return end
 	
 	local FrameAnchorFrom, FrameAnchorTo
 	local BarAnchorFrom, BarAnchorTo, x, y
 	
-	if (self.Attach == "bottom") then
+	if (self.Attached == "bottom") then
 		FrameAnchorFrom = "TOPLEFT"
 		FrameAnchorTo = "BOTTOMLEFT"
 	end
 
-	if (self.Attach == "top" ) then
+	if (self.Attached == "top" ) then
 		FrameAnchorFrom = "BOTTOMLEFT"
 		FrameAnchorTo = "TOPLEFT"
 	end
-	if (self.Attach == "left" ) then
+
+	if (self.Attached == "left" ) then
 		FrameAnchorFrom = "TOPRIGHT"
 		FrameAnchorTo = "TOPLEFT"
 	end
 
-	if (self.Attach == "right" ) then
+	if (self.Attached == "right" ) then
 		FrameAnchorFrom = "TOPLEFT"
 		FrameAnchorTo = "TOPRIGHT"
 	end
@@ -435,14 +449,16 @@ function BaseBar:ConstructBar()
 		
 		Bar:RotateBar(self.Rotate)
 		if not Attached then
+			Attached = self.Attach and getglobal(self.Attach) or nil
+			if Attached then Bar.Anchor:SetParent(Attached) end
 			Bar.Anchor:ClearAllPoints()
-			Bar.Anchor:SetPoint(BarAnchorFrom, self.Anchor, BarAnchorFrom)
+			Bar.Anchor:SetPoint(Attached and FrameAnchorFrom or BarAnchorFrom, self.Anchor, Attached and FrameAnchorTo or BarAnchorFrom)
 		else
 			Bar.Anchor:ClearAllPoints()
 			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorTo)
+			Bar.Anchor:SetParent(self.Anchor)
 		end
 		Bar.Anchor:Show()
-		Bar.Anchor:SetParent(self.Anchor)
 		
 		if Bar.SparkBase then
 			local x,y = GetXY(Bar:Width(), self.Rotate)	
@@ -481,9 +497,20 @@ function XPBar:new(o)
 	-- NoXP
 	local n = BaseBar:new{Name = "NoXP"..o.Name, Rotate = o.Rotate}
 	setmetatable(n, self)
-	if self.Colours then
+	
+	if not o.Colours then o.Colours = {} end
+
+	for i,v in pairs(self.Colours) do
+		if not o.Colours[i] then
+			o.Colours[i] = cloneTable(v)
+		end
+	end
+
+	self.__index = self
+
+	if o.Colours then
 		local count = 1
-		for i,v in pairs(self.Colours) do
+		for i,v in pairs(o.Colours) do
 			o.Options.args.colours.args[i] = {
 				order = count,
 				name = i,
@@ -495,8 +522,8 @@ function XPBar:new(o)
 			count = count + 1
 		end
 	end
-
-	self.__index = self
+	
+	x.Colours, r.Colours, n.Colours = o.Colours, o.Colours, o.Colours
 
 	o.Sections = {[1] = x, [2] = r, [3] = n}
 	return o
@@ -504,7 +531,7 @@ end
 
 function XPBar:Update()
 	local BarWidth
-	local Attached = getglobal(self.Attached) or self.Attached
+	local Attached = getglobal(self.Attach) or self.Attach
 	if not Attached or Attached:GetName() == UIParent then
 		BarWidth = self.BarWidth
 	else
