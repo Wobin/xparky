@@ -26,18 +26,6 @@ local default = {
 			scale = 1,
 			group = nil
 		},
-		Bars = {
-			BarNames = { "XPBar", "RepBar" },
-			XPBar = {
-				Name = "XPBar",
-				BarType = "XP",
-			},
-			RepBar = {
-				Name = "RepBar",
-				BarType = "Rep",
-				Faction = 2,
-			}
-		}
 	}
 }
 
@@ -112,13 +100,29 @@ end
 
 function Xparky:OnInitialize()
 	Xparky.db = LibStub("AceDB-3.0"):New("XparkyDB", default)
+	if not Xparky.db.profile.Bars then
+		Xparky:Print("Registering default values")
+		Xparky.db.profile.Bars = {
+				BarNames = { "XPBar", "RepBar" },
+				XPBar = {
+					Name = "XPBar",
+					BarType = "XP",
+					Note = "default",
+				},
+				RepBar = {
+					Name = "RepBar",
+					BarType = "Rep",
+					Faction = 2,
+				}
+			}
+
+	end
 	self:InitialiseOptions()
 	
 	db = Xparky.db.profile
 	reg:RegisterOptionsTable("Xparky", options)
 	self:RegisterChatCommand("xp", function() dialog:Open("Xparky") end)
 
-	--Frog = XparkyBar:New{Name="Frog", Type="XP", Rotate = 0}
 	Xparky:GenerateBars()
 	Xparky:getFactions()
 	Xparky:GenerateBarList()
@@ -137,7 +141,9 @@ end
 
 function Xparky:GenerateBars()
 	for i,v in ipairs(db.Bars.BarNames) do
-		XparkyBar:New(db.Bars[v])
+		if db.Bars[v] then
+			XparkyBar:New(db.Bars[v])
+		end
 	end
 end
 
