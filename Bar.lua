@@ -1,6 +1,7 @@
 local defaultBar = {}
 
 local reg = LibStub("AceConfigRegistry-3.0")
+local event = LibStub("AceEvent-3.0")
 local Strata = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
 local angles = {[180] = { 1,0,1,1,0,0,0,1}, [0] = {0,1,0,0,1,1,1,0}, [270] = {1,1,0,1,1,0,0,0}, [90] = {0,0,1,0,0,1,1,1}}
 
@@ -122,6 +123,8 @@ function BaseBar:AttachBarToFrame(frame, side)
 	Xparky:Print("Attach "..self.Name.." to "..frame.." on the "..side.." side")
 	self.Attach = frame
 	self.Attached = side
+	Xparky.db.profile.Bars[self.Name].Attach = frame
+	Xparky.db.profile.Bars[self.Name].Attached = side
 end
 
 function BaseBar:new(o)
@@ -141,7 +144,9 @@ function BaseBar:new(o)
 							Xparky.db.profile.Bars[info.handler.Name][info.arg] = v;
 							info.handler[info.arg] = v
 							info.handler:ConstructBar()
-							reg:NotifyChange("Xparky")
+							if info.type ~= "range" then
+								reg:NotifyChange("Xparky")
+							end
 						end,
 					get = function(info) return info.handler[info.arg] end,
 					args = {
@@ -156,6 +161,14 @@ function BaseBar:new(o)
 							desc = "How long the bar is",
 							min = 0.1, max = 2000, step = 1,
 							arg = "BarWidth",
+							hidden = function(info) return info.handler.Attach and info.handler.Attach ~= "" end,
+							order = 2,
+						},
+						spacer = {
+							type = "description",
+							name = "",
+							desc = "",
+							hidden = function(info) return not info.handler.Attach or info.handler.Attach == "" end,
 							order = 2,
 						},
 						thickness = {
@@ -170,7 +183,7 @@ function BaseBar:new(o)
 							type = "range",
 							name = "Spark intensity",
 							desc = "Alpha of the spark",
-							min = 0, max = 1, step = 0.5,
+							min = 0, max = 1, step = 0.05,
 							arg = "Spark",
 							order = 4,
 						},
@@ -213,7 +226,7 @@ function BaseBar:new(o)
 							desc = "Offset from the frame in the X axis",
 							arg = "Xoffset",
 							order = 8,
-							hidden = function(info) return info.handler.Attach and info.handler.Attach ~= "" end,
+							hidden = function(info) return not info.handler.Attach or info.handler.Attach == "" end,
 						},
 						yoffset = {
 							type = "input",
@@ -221,7 +234,7 @@ function BaseBar:new(o)
 							desc = "Offset from the frame in the Y axis",
 							arg = "Yoffset",
 							order = 9,
-							hidden = function(info) return info.handler.Attach and info.handler.Attach ~= "" end,
+							hidden = function(info) return not info.handler.Attach or info.handler.Attach == "" end,
 						},
 						colours = {
 							type = "group",
@@ -247,6 +260,17 @@ function BaseBar:new(o)
 									info.handler:ConstructBar()
 									end,
 							args = {}
+						},
+						delete = {
+							type = "execute",
+							name = "Delete Bar",
+							desc = "Delete this bar",
+							func = function(info) 
+										Xparky.db.profile.Bars[info.handler.Name] = nil
+										XparkyBar.Bars[info.handler.Name].Anchor:Hide()
+										XparkyBar.Bars[info.handler.Name] = nil
+										Xparky:GenerateBarList()
+									end,
 						},
 					}
 				}
@@ -275,6 +299,7 @@ function BaseBar:new(o)
 			o:CreateTextures()
 		end
 	end 
+	event:Embed(o)
 	self.__index = self
 	return o
 end
@@ -376,8 +401,8 @@ function BaseBar:SetColour(index)
 	if Setting then
 		self.Texture:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
 		if self.SparkBase then
-			self.SparkBase:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
-			self.SparkOverlay:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, Setting.Alpha)
+			self.SparkBase:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, self.Spark)
+			self.SparkOverlay:SetVertexColor(Setting.Red, Setting.Green, Setting.Blue, self.Spark)
 		end
 	end
 end
@@ -395,7 +420,7 @@ local function GetXY(Width, Rotate)
 end
 
 function BaseBar:ConstructBar()
-	local Attached = nil 
+	local Attached = nil
 
 	if not self.Sections then return end
 	
@@ -443,21 +468,25 @@ function BaseBar:ConstructBar()
 	end
 	
 	self:Update()
+	self.Anchor:ClearAllPoints()
+	Attached = self.Attach and getglobal(self.Attach) or nil
+	self.Anchor:SetParent(Attached or UIParent)
+	if Attached then
+		self.Anchor:SetPoint(FrameAnchorFrom, Attached, FrameAnchorTo, tonumber(self.Xoffset) or 0, tonumber(self.Yoffset) or 0)
+	end
+	
+	Attached = self.Anchor
 
 	for i, Bar in ipairs(self.Sections) do
-		Bar:SetColour(i)
 		
 		Bar:RotateBar(self.Rotate)
-		if not Attached then
-			Attached = self.Attach and getglobal(self.Attach) or nil
-			if Attached then Bar.Anchor:SetParent(Attached) end
-			Bar.Anchor:ClearAllPoints()
-			Bar.Anchor:SetPoint(Attached and FrameAnchorFrom or BarAnchorFrom, self.Anchor, Attached and FrameAnchorTo or BarAnchorFrom)
+		Bar.Anchor:ClearAllPoints()
+		if Attached == self.Anchor then
+			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorFrom)
 		else
-			Bar.Anchor:ClearAllPoints()
 			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorTo)
-			Bar.Anchor:SetParent(self.Anchor)
 		end
+		Bar.Anchor:SetParent(self.Anchor)
 		Bar.Anchor:Show()
 		
 		if Bar.SparkBase then
@@ -468,6 +497,7 @@ function BaseBar:ConstructBar()
 			Bar.SparkOverlay:SetPoint(BarAnchorTo, Bar.Anchor, BarAnchorTo, x, y)
 		end
 		Attached = Bar.Anchor
+		Bar:SetColour(i)
 	end
 end
 --[[ XP Bar Functions ]]--
@@ -526,16 +556,22 @@ function XPBar:new(o)
 	x.Colours, r.Colours, n.Colours = o.Colours, o.Colours, o.Colours
 
 	o.Sections = {[1] = x, [2] = r, [3] = n}
+	o:RegisterEvent("PLAYER_XP_UPDATE", "ConstructBar") 
+	o:RegisterEvent("UPDATE_EXHAUSTION", "ConstructBar")
 	return o
 end
 
 function XPBar:Update()
 	local BarWidth
-	local Attached = getglobal(self.Attach) or self.Attach
-	if not Attached or Attached:GetName() == UIParent then
+	local Attached = self.Attach and getglobal(self.Attach) or nil
+	if not Attached then
 		BarWidth = self.BarWidth
 	else
-		BarWidth = Attached:GetWidth()
+		if self.Rotation == 0 or self.Rotation == 180 then
+			BarWidth = Attached:GetWidth()
+		else
+			BarWidth = Attached:GetHeight()
+		end
 	end
 	local Rest, CurrXP, MaxXP = GetXPExhaustion() or 0, UnitXP("player") or 0, UnitXPMax("player") or 0
 	local Percent = (BarWidth/MaxXP)
