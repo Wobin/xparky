@@ -300,6 +300,9 @@ function BaseBar:new(o)
 		end
 	end 
 	event:Embed(o)
+	for _,v in ipairs(o.Events) do
+		o:RegisterEvent(v, "ConstructBar")
+	end
 	self.__index = self
 	return o
 end
@@ -509,7 +512,7 @@ local XPBar = BaseBar:new{
 					NoXPBar = { Red = 0.3, Green = 0.3, Blue = 0.3, Alpha = 1 },
 					RestBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
 				},
-				ConnectedFrame = "LegoXparky",
+				Events = {"PLAYER_XP_UPDATE", "UPDATE_EXHAUSTION" },
 				Rotate = 0,
 				BarOrder = { [1] = "XPBar", [2] = "RestBar", [3] = "NoXPBar" },
 				BarWidth = 900,
@@ -556,8 +559,6 @@ function XPBar:new(o)
 	x.Colours, r.Colours, n.Colours = o.Colours, o.Colours, o.Colours
 
 	o.Sections = {[1] = x, [2] = r, [3] = n}
-	o:RegisterEvent("PLAYER_XP_UPDATE", "ConstructBar") 
-	o:RegisterEvent("UPDATE_EXHAUSTION", "ConstructBar")
 	return o
 end
 
@@ -612,9 +613,10 @@ local RepBar = BaseBar:new{
 					RepBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
 					NoRepBar = { Red = 0, Green = 0.3, Blue = 1, Alpha = 1 },
 				},
-				ConnectedFrame = "XparkyXPBar",
+				Events = {"UPDATE_FACTION"},
 				BarOrder = { [1] = "RepBar", [2] = "NoRepBar" },
 				Faction = 6,
+
 				Rotate = 0,
 				BarWidth = 300,
 			}
@@ -680,6 +682,105 @@ function RepBar:Update()
 
 end
 
+--[[ Honour Bar Functions ]]--
+
+local HonourBar = BaseBar:new{
+				BarType = "Honour",
+				Colours = {
+					HonourBar = { Red = 1, Green = 0.2, Blue = 1, Alpha = 1 },
+					TargetBar = { Red = 0.2, Green = 1, Blue = 1, Alpha = 1 },
+					NoHonourBar = { Red = 0, Green = 0.3, Blue = 1, Alpha = 1 },
+				},
+				Events = {"HONOR_CURRENCY_UPDATE"},
+				BarOrder = { [1] = "HonourBar", [2] = "TargetBar", [3] = "NoHonourBar" },
+				Rotate = 0,
+				Target = 8000,
+				BarWidth = 300,
+			}
+			
+function HonourBar:new(o)
+	o = BaseBar:new(o)
+	setmetatable(o, self)
+	local r = BaseBar:new{Name = "Honour"..o.Name, HasSpark = true, Rotate = o.Rotate}
+	setmetatable(r, self)
+	local t = BaseBar:new{Name = "Target"..o.Name, HasSpark = true, Rotate = o.Rotate }
+	setmetatable(t, self)
+	local n = BaseBar:new{Name = "NoHonour"..o.Name, Rotate = o.Rotate}
+	setmetatable(n, self)
+	if o.Colours or self.Colours then
+
+		local count = 1
+		for i,v in pairs(o.Colours or self.Colours) do
+			o.Options.args.colours.args[i] = {
+				order = count,
+				name = i,
+				desc = "Colour of the "..i.." bar",
+				type = "color",
+				hasAlpha = true,
+				arg = i
+			}
+			count = count + 1
+		end
+	end
+	o.Options.args.target = {
+		type = "input",
+		name = "Target Honour",
+		desc = "Point at which to switch colours from the Honour Bar to the Target Bar",
+		arg = "Target"
+	}
+	o.Options.args.maxlimit = {
+		type = "toggle",
+		name = "Max Limit",
+		desc = "Show the max limit of the honour cap at 75k, otherwise, the bar limit will be the Target value"
+		arg = "MaxLimit"
+	}
+
+	self.__index = self
+	o.Sections = {[1] = r, [2] = t, [3] = n}
+	return o
+end
+
+function HonourBar:Update()
+	local BarWidth
+	local Attached = getglobal(self.Attached) or self.Attached
+	if not Attached or Attached:GetName() == UIParent then
+		BarWidth = self.BarWidth
+	else
+		BarWidth = Attached:GetWidth()
+	end
+	
+	self.Sections[1]:Height(self.Thickness)
+	self.Sections[2]:Height(self.Thickness)
+	self.Sections[3]:Height(self.Thickness)
+	self:Width(BarWidth)
+	self:Height(self.Thickness)
+	self.Label:Hide()
+
+	if self.ShowLabel then	
+		self.Label:SetTextHeight(self.Thickness)
+		self.Label:SetParent(self.Sections[3].Anchor)
+		self.Label:ClearAllPoints()
+		self.Label:SetPoint("CENTER", self.Anchor, "CENTER")
+		self.Label:Show()
+	end
+	local max, current = self.Target, GetHonorCurrency()
+	if self.MaxLimit then
+		max = 75000
+	end
+
+	local Percent = BarWidth/max
+	self.Sections[1]:Width(Percent * current)
+	self.Sections[2]:Width(Percent * current)
+	self.Sections[3]:Width(Percent * (max - current))
+	self.Anchor:SetFrameLevel(self.Sections[3].Anchor:GetFrameLevel() + 2)
+
+	if current >= self.Target then
+		self.Sections[1]:Width(0)
+	else
+		self.Sections[2]:Width(0)
+	end
+end
+
 --[[ Generic Bar Functions ]] -- 
 
 XparkyBar = {}
@@ -694,8 +795,10 @@ function XparkyBar:New(Bar)
 	
 	if Bar.BarType == "XP" then
 		Bar = XPBar:new(cloneTable(Bar))
-	else
+	elseif Bar.BarType == "Rep" then
 		Bar = RepBar:new(cloneTable(Bar))
+	elseif Bar.BarType == "Honour" then
+		Bar = HonourBar:new(cloneTable(Bar))
 	end
 	Bar:ConstructBar()
 	Bar.Anchor:ClearAllPoints()

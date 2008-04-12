@@ -41,7 +41,7 @@ options.args.bars = {
 					type = "select",
 					name = "Bar Type",
 					order = 1,
-					values = { XP = "XP Bar", Rep = "Rep Bar" },
+					values = { XP = "XP Bar", Rep = "Rep Bar", Honour = "Honour Bar" },
 					arg = "Type",
 				},
 				name = {
@@ -87,12 +87,13 @@ options.args.bars = {
 										(currentBar.Type == "Rep" and (not currentBar.Name or not currentBar.Faction)) 
 							end,
 					func =	function(k,v) 
+								table.insert(db.Bars.BarNames, currentBar.Name)
 								if currentBar.Type == "XP" then
-									table.insert(db.Bars.BarNames, currentBar.Name)
 									db.Bars[currentBar.Name] = {Name = currentBar.Name, BarType = "XP" }
 								elseif currentBar.Type == "Rep" then
-									table.insert(db.Bars.BarNames, currentBar.Name)
 									db.Bars[currentBar.Name] = {Name = currentBar.Name, BarType = "Rep", Faction = factionTable[currentBar.Faction] }
+								elseif currentBar.Type == "Honour" then
+									db.Bars[currentBar.Name] = {Name = currentBar.Name, BarType = "Honour"}
 								end
 								Xparky:GenerateBars()
 							end
