@@ -422,6 +422,16 @@ local function GetXY(Width, Rotate)
 	end
 end
 
+local Connections = {	["bottom"] = {"TOPLEFT", "BOTTOMLEFT"},
+						["top"] = { "BOTTOMLEFT", "TOPLEFT"},
+						["left"] = { "TOPRIGHT", "TOPLEFT"},
+						["right"] = { "TOPLEFT", "TOPRIGHT"},
+						[0] = { "LEFT", "RIGHT" },
+						[90] = { "TOP", "BOTTOM" },
+						[180] = { "RIGHT", "LEFT"},
+						[270] = { "BOTTOM", "TOP"}
+					}
+
 function BaseBar:ConstructBar()
 	local Attached = nil
 
@@ -430,47 +440,15 @@ function BaseBar:ConstructBar()
 	local FrameAnchorFrom, FrameAnchorTo
 	local BarAnchorFrom, BarAnchorTo, x, y
 	
-	if (self.Attached == "bottom") then
-		FrameAnchorFrom = "TOPLEFT"
-		FrameAnchorTo = "BOTTOMLEFT"
-	end
+	FrameAnchorFrom = Connections[self.Attached][1]
+	FrameAnchorTo = Connections[self.Attached][2]
+	BarAnchorFrom = Connections[self.Rotate][1]
+	BarAnchorTo = Connections[self.Rotate][2]
 
-	if (self.Attached == "top" ) then
-		FrameAnchorFrom = "BOTTOMLEFT"
-		FrameAnchorTo = "TOPLEFT"
-	end
-
-	if (self.Attached == "left" ) then
-		FrameAnchorFrom = "TOPRIGHT"
-		FrameAnchorTo = "TOPLEFT"
-	end
-
-	if (self.Attached == "right" ) then
-		FrameAnchorFrom = "TOPLEFT"
-		FrameAnchorTo = "TOPRIGHT"
-	end
-	
-	if self.Rotate == 0  then
-		BarAnchorFrom = "LEFT"
-		BarAnchorTo = "RIGHT"
-	end
-
-	if self.Rotate == 90  then
-		BarAnchorFrom = "TOP"
-		BarAnchorTo = "BOTTOM"
-	end
-
-	if self.Rotate == 180  then
-		BarAnchorFrom = "RIGHT"
-		BarAnchorTo = "LEFT"
-	end
-
-	if self.Rotate == 270  then
-		BarAnchorFrom = "BOTTOM"
-		BarAnchorTo = "TOP"
-	end
-	
+	-- Adjust the width of all the sections according to bar type and values
 	self:Update()
+
+	-- Reattach to parent anchor correctly
 	self.Anchor:ClearAllPoints()
 	Attached = self.Attach and getglobal(self.Attach) or nil
 	self.Anchor:SetParent(Attached or UIParent)
@@ -480,19 +458,21 @@ function BaseBar:ConstructBar()
 	
 	Attached = self.Anchor
 
+	-- Attach each section according to orientation
 	for i, Bar in ipairs(self.Sections) do
 		
+		Bar:SetColour(i)
 		Bar:RotateBar(self.Rotate)
 		Bar.Anchor:ClearAllPoints()
-		if Attached == self.Anchor then
-			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorFrom)
+		if Attached == self.Anchor then -- If we're attaching the first section
+			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorFrom) -- attach to the base background bar
 		else
-			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorTo)
+			Bar.Anchor:SetPoint(BarAnchorFrom, Attached, BarAnchorTo) -- attach to the end of the previous section
 		end
 		Bar.Anchor:SetParent(self.Anchor)
 		Bar.Anchor:Show()
 		
-		if Bar.SparkBase then
+		if Bar.SparkBase then -- attach the spark to the end of the initial bar
 			local x,y = GetXY(Bar:Width(), self.Rotate)	
 			Bar.SparkBase:ClearAllPoints()
 			Bar.SparkOverlay:ClearAllPoints()
@@ -500,7 +480,6 @@ function BaseBar:ConstructBar()
 			Bar.SparkOverlay:SetPoint(BarAnchorTo, Bar.Anchor, BarAnchorTo, x, y)
 		end
 		Attached = Bar.Anchor
-		Bar:SetColour(i)
 	end
 end
 --[[ XP Bar Functions ]]--
@@ -725,7 +704,7 @@ function HonourBar:new(o)
 	o.Options.args.target = {
 		type = "input",
 		name = "Target Honour",
-		desc = "Point at which to switch colours from the Honour Bar to the Target Bar",
+		desc = "Point at which to switch colours from the Honour Bar to the Target Bar, ie, when you've reached your target",
 		arg = "Target"
 	}
 	o.Options.args.maxlimit = {
@@ -785,6 +764,7 @@ end
 
 XparkyBar = {}
 
+local MakeBar = { ["XP"] = XPBar, ["Rep"] = RepBar, ["Honour"] = HonourBar }
 
 
 function XparkyBar:New(Bar)
@@ -793,13 +773,7 @@ function XparkyBar:New(Bar)
 		return 
 	end
 	
-	if Bar.BarType == "XP" then
-		Bar = XPBar:new(cloneTable(Bar))
-	elseif Bar.BarType == "Rep" then
-		Bar = RepBar:new(cloneTable(Bar))
-	elseif Bar.BarType == "Honour" then
-		Bar = HonourBar:new(cloneTable(Bar))
-	end
+	Bar = MakeBar[Bar.BarType]:new(cloneTable(Bar))
 	Bar:ConstructBar()
 	Bar.Anchor:ClearAllPoints()
 	Bar.Anchor:SetPoint("CENTER", UIParent)
