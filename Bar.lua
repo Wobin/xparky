@@ -299,6 +299,21 @@ function BaseBar:new(o)
 			o:CreateTextures()
 		end
 	end 
+	
+	if o.Colours then
+		local count = 1
+		for i,v in pairs(o.Colours) do
+			o.Options.args.colours.args[i] = {
+				order = count,
+				name = i,
+				desc = "Colour of the "..i.." bar",
+				type = "color",
+				hasAlpha = true,
+				arg = i
+			}
+			count = count + 1
+		end
+	end
 	event:Embed(o)
 	for _,v in ipairs(o.Events) do
 		o:RegisterEvent(v, "ConstructBar")
@@ -520,20 +535,7 @@ function XPBar:new(o)
 
 	self.__index = self
 
-	if o.Colours then
-		local count = 1
-		for i,v in pairs(o.Colours) do
-			o.Options.args.colours.args[i] = {
-				order = count,
-				name = i,
-				desc = "Colour of the "..i.." bar",
-				type = "color",
-				hasAlpha = true,
-				arg = i
-			}
-			count = count + 1
-		end
-	end
+
 	
 	x.Colours, r.Colours, n.Colours = o.Colours, o.Colours, o.Colours
 
@@ -609,21 +611,7 @@ function RepBar:new(o)
 	setmetatable(r, self)
 	local n = BaseBar:new{Name = "NoRep"..o.Name, Rotate = o.Rotate, Faction = o.Faction}
 	setmetatable(n, self)
-	if o.Colours or self.Colours then
 
-		local count = 1
-		for i,v in pairs(o.Colours or self.Colours) do
-			o.Options.args.colours.args[i] = {
-				order = count,
-				name = i,
-				desc = "Colour of the "..i.." bar",
-				type = "color",
-				hasAlpha = true,
-				arg = i
-			}
-			count = count + 1
-		end
-	end
 
 	self.__index = self
 	o.Sections = {[1] = r, [2] = n}
@@ -686,21 +674,7 @@ function HonourBar:new(o)
 	setmetatable(t, self)
 	local n = BaseBar:new{Name = "NoHonour"..o.Name, Rotate = o.Rotate}
 	setmetatable(n, self)
-	if o.Colours or self.Colours then
 
-		local count = 1
-		for i,v in pairs(o.Colours or self.Colours) do
-			o.Options.args.colours.args[i] = {
-				order = count,
-				name = i,
-				desc = "Colour of the "..i.." bar",
-				type = "color",
-				hasAlpha = true,
-				arg = i
-			}
-			count = count + 1
-		end
-	end
 	o.Options.args.target = {
 		type = "input",
 		name = "Target Honour",
